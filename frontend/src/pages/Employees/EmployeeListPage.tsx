@@ -15,6 +15,7 @@ import { cn } from "../../lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import EmployeeForm from "./components/EmployeeFormView";
 import { employeeApi } from "../../api/employeeApi";
+import { useEmployeeActions } from "../../hooks/useEmployeeActions";
 
 // --- Skeleton Component สำหรับ Loading State ---
 const EmployeeSkeleton = () => (
@@ -35,6 +36,7 @@ export default function EmployeeListPage() {
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [activeDept, setActiveDept] = useState("ทั้งหมด");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { deleteEmployee } = useEmployeeActions();
 
   // 1. ดึงข้อมูลแผนกจริงจาก Backend (/api/departments/)
   const { data: departmentsData } = useQuery({
@@ -51,14 +53,21 @@ export default function EmployeeListPage() {
   // 2. ดึงข้อมูลพนักงาน พร้อมรองรับการ Filter ตามแผนกที่เลือก
   const { data: employees, isLoading, isError } = useQuery({
     queryKey: ["employees", activeDept],
-    queryFn: () => employeeApi.getAll({ 
-      department: activeDept === "ทั้งหมด" ? undefined : activeDept 
+    queryFn: () => employeeApi.getAll({
+      department: activeDept === "ทั้งหมด" ? undefined : activeDept
     }),
   });
 
+  // ฟังก์ชันยืนยันการลบ
+  const handleDelete = (id: number) => {
+    if (confirm("คุณต้องการลบข้อมูลพนักงานท่านนี้ใช่หรือไม่?")) {
+      deleteEmployee(id);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
+
       {/* --- Header --- */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
@@ -102,7 +111,7 @@ export default function EmployeeListPage() {
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#2D3748]/20 group-focus-within:text-[#4A7C59] transition-colors" size={22} />
           <Input placeholder="ค้นหาพนักงาน..." className="h-16 pl-16 border-none bg-transparent text-lg focus-visible:ring-0" />
         </div>
-        
+
         <div className="flex items-center gap-2 p-1 overflow-x-auto no-scrollbar">
           {realDepartments.map((dept) => (
             <button
@@ -110,8 +119,8 @@ export default function EmployeeListPage() {
               onClick={() => setActiveDept(dept)}
               className={cn(
                 "px-6 h-12 rounded-2xl whitespace-nowrap font-bold text-sm transition-all",
-                activeDept === dept 
-                  ? "bg-white text-[#4A7C59] shadow-sm ring-1 ring-[#4A7C59]/10" 
+                activeDept === dept
+                  ? "bg-white text-[#4A7C59] shadow-sm ring-1 ring-[#4A7C59]/10"
                   : "text-[#2D3748]/40 hover:bg-white/40 hover:text-[#2D3748]"
               )}
             >
@@ -154,7 +163,16 @@ export default function EmployeeListPage() {
           {viewMode === "kanban" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-10">
               {employees.map((emp) => (
-                <EmployeeKanbanCard key={emp.id} employee={emp} />
+                <div key={emp.id} className="relative group">
+                  <EmployeeKanbanCard employee={emp} />
+                  {/* ปุ่มลบแบบด่วน (Quick Delete) */}
+                  <button
+                    onClick={() => handleDelete(emp.id)}
+                    className="absolute top-2 right-2 p-2 bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ลบ
+                  </button>
+                </div>
               ))}
             </div>
           ) : (

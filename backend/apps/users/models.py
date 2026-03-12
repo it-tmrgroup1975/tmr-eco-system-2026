@@ -32,7 +32,7 @@ class User(AbstractUser):
     )
     employment_type = models.CharField(
         max_length=50,
-        choices=[('full_time', 'พนักงานประจำ'), ('contract', 'พนักงานสัญญาจ้าง'), ('daily', 'พนักงานรายวัน')],
+        choices=[('full_time', 'พนักงานประจำ'), ('contract', 'พนักงานสัญญาจ้าง'), ('part_time', 'พนักงานชั่วคราว')],
         default='full_time',
         verbose_name="ประเภทการจ้างงาน"
     )

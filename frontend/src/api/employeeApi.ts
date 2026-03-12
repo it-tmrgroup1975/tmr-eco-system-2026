@@ -58,4 +58,13 @@ export const employeeApi = {
     const response = await axiosInstance.get("/api/departments/");
     return response.data; // ข้อมูลที่ได้จะเป็น Array ของวัตถุแผนก
   },
+
+  /**
+   * ดึงรายชื่อแผนกทั้งหมดจาก Backend
+   * Path: GET /api/departments/
+   */
+  getPositions: async () => {
+    const response = await axiosInstance.get("/api/positions/");
+    return response.data; // ข้อมูลที่ได้จะเป็น Array ของวัตถุแผนก
+  },
 };

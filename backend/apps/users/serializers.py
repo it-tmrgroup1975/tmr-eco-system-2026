@@ -35,6 +35,13 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 'department_name', 
             'position_name', 'role', 'employment_type'
         ]
+        extra_kwargs = {'username': {'required': False}} # ทำให้ username ไม่ต้องกรอกในฟอร์ม
+
+    def validate(self, attrs):
+        # ถ้าไม่มี username ให้ใช้ email แทน
+        if not attrs.get('username') and attrs.get('email'):
+            attrs['username'] = attrs.get('email')
+        return super().validate(attrs)
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip() or obj.username
