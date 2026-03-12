@@ -49,4 +49,13 @@ export const employeeApi = {
   delete: async (id: string) => {
     await axiosInstance.delete(`/api/employees/${id}/`);
   },
+
+  /**
+   * ดึงรายชื่อแผนกทั้งหมดจาก Backend
+   * Path: GET /api/departments/
+   */
+  getDepartments: async () => {
+    const response = await axiosInstance.get("/api/departments/");
+    return response.data; // ข้อมูลที่ได้จะเป็น Array ของวัตถุแผนก
+  },
 };
