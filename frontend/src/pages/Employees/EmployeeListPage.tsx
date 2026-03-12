@@ -7,13 +7,13 @@ import {
   UserPlus,
   SlidersHorizontal,
 } from "lucide-react";
-import { fetchEmployees } from "../../api/employeeApi";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { EmployeeKanbanCard } from "./components/EmployeeKanbanCard";
 import { cn } from "../../lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import EmployeeForm from "./components/EmployeeFormView";
+import { employeeApi } from "../../api/employeeApi";
 
 const DEPARTMENTS = ["ทั้งหมด", "ฝ่ายผลิต", "ฝ่ายขาย", "ไอที", "บัญชี"];
 
@@ -22,7 +22,7 @@ export default function EmployeeListPage() {
   const [activeDept, setActiveDept] = useState("ทั้งหมด");
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
-    queryFn: fetchEmployees
+    queryFn: () => employeeApi.getAll()
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -179,8 +179,8 @@ export default function EmployeeListPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-4 font-medium text-[#2D3748]/60">{emp.department_name}</td>
-                      <td className="px-8 py-4 font-medium text-[#2D3748]/60">{emp.position_name}</td>
+                      <td className="px-8 py-4 font-medium text-[#2D3748]/60">{emp.department}</td>
+                      <td className="px-8 py-4 font-medium text-[#2D3748]/60">{emp.position}</td>
                       <td className="px-8 py-4 text-right text-[#4A7C59] font-bold cursor-pointer hover:underline">รายละเอียด</td>
                     </tr>
                   ))}

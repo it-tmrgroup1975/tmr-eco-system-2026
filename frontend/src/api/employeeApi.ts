@@ -1,30 +1,52 @@
-import api from "./axios";
+// frontend/src/api/employeeApi.ts
+import type { Employee } from "../types/employee";
+import axiosInstance from "./axios";
 
-export interface Employee {
-  id: number;
-  employee_id: string;
-  username: string;     // เพิ่มฟิลด์นี้เพื่อให้ตรงตามที่ LoginPage/AppLayout ต้องการ
-  first_name: string;
-  last_name: string;
-  department_name: string;
-  position_name: string;
-  role: string;
-  employment_type: string;
-  avatar?: string;      // เพิ่มฟิลด์รูปโปรไฟล์ (Optional) เพื่อแก้ปัญหา Property 'avatar' does not exist
-  email?: string;       // เพิ่มเพื่อให้ Kanban Card แสดงผลได้สมบูรณ์
-  phone?: string;       // เพิ่มเพื่อให้ Kanban Card แสดงผลได้สมบูรณ์
-}
+export const employeeApi = {
+  /**
+   * ดึงรายชื่อพนักงานทั้งหมด
+   * Backend path: GET /api/employees/
+   */
+  getAll: async (filters?: any) => {
+    // แก้ไขจาก /api/users/ เป็น /api/employees/ ตาม router.register ใน core/urls.py
+    const response = await axiosInstance.get<Employee[]>("/api/employees/", { 
+      params: filters 
+    });
+    return response.data;
+  },
+  
+  /**
+   * ดึงข้อมูลพนักงานรายบุคคล
+   * Backend path: GET /api/employees/{id}/
+   */
+  getById: async (id: string) => {
+    const response = await axiosInstance.get<Employee>(`/api/employees/${id}/`);
+    return response.data;
+  },
 
-export const fetchEmployees = async (): Promise<Employee[]> => {
-  const response = await api.get("/api/employees/");
-  return response.data;
-};
+  /**
+   * สร้างพนักงานใหม่
+   * Backend path: POST /api/employees/
+   */
+  create: async (data: Partial<Employee>) => {
+    const response = await axiosInstance.post<Employee>("/api/employees/", data);
+    return response.data;
+  },
 
-export const createEmployee = async (formData: FormData): Promise<Employee> => {
-  const response = await api.post("/api/employees/", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
+  /**
+   * อัปเดตข้อมูลพนักงาน
+   * Backend path: PATCH /api/employees/{id}/
+   */
+  update: async (id: string, data: Partial<Employee>) => {
+    const response = await axiosInstance.patch<Employee>(`/api/employees/${id}/`, data);
+    return response.data;
+  },
+
+  /**
+   * ลบข้อมูลพนักงาน
+   * Backend path: DELETE /api/employees/{id}/
+   */
+  delete: async (id: string) => {
+    await axiosInstance.delete(`/api/employees/${id}/`);
+  },
 };
