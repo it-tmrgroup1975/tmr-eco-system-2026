@@ -23,8 +23,10 @@ export const useEmployeeList = () => {
 
   // ดึงข้อมูลพนักงานตามแผนก
   const { data: employees, isLoading, isError } = useQuery<Employee[]>({
+    // เพิ่ม activeDept เข้าไปใน queryKey เพื่อให้เกิดการ Refetch เมื่อเปลี่ยนแผนก
     queryKey: ["employees", activeDept],
     queryFn: () => employeeApi.getAll({
+      // ส่งชื่อแผนกไปที่ API (ถ้าเลือก "ทั้งหมด" ให้ส่ง undefined เพื่อไม่กรอง)
       department: activeDept === "ทั้งหมด" ? undefined : activeDept
     }),
   });

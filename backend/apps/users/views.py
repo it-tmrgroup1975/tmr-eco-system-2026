@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
-
-from .models import Department, Position
+from django.db import models
+from .models import Department, Position, User
 from .serializers import (
     CustomTokenObtainPairSerializer,
     EmployeeListSerializer,
@@ -39,9 +39,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        ปรับปรุง Queryset ตามความต้องการ เช่น ค้นหาพนักงาน
+        ปรับปรุง Queryset รองรับการค้นหา (Search) และการกรองตามแผนก (Department Filter)
         """
         queryset = super().get_queryset()
+        
+        # 1. รับค่าการค้นหา (Search)
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
@@ -49,8 +51,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 models.Q(last_name__icontains=search) |
                 models.Q(employee_id__icontains=search)
             )
+            
+        # 2. เพิ่มการกรองตามแผนก (Department Filter)
+        # รับค่าชื่อแผนกที่ส่งมาจาก Frontend (activeDept)
+        department_name = self.request.query_params.get('department', None)
+        if department_name:
+            # กรองโดยใช้ชื่อแผนกผ่านความสัมพันธ์ ForeignKey ไปยังโมเดล Department
+            queryset = queryset.filter(department__name=department_name)
+            
         return queryset
-
 
 # --- Support Data ViewSets (สำหรับ Dropdown ใน Frontend) ---
 

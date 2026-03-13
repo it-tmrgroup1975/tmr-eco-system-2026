@@ -1,5 +1,6 @@
 // frontend/src/api/employeeApi.ts
 import type { Employee, Department, Position } from "../types/employee";
+import api from "./axios";
 import axiosInstance from "./axios";
 
 /**
@@ -17,11 +18,12 @@ export const employeeApi = {
    * ดึงรายชื่อพนักงานทั้งหมด
    * ระบุ Type เป็น Employee[] เพื่อให้ TanStack Query ใช้งานได้ทันที
    */
-  getAll: async (filters?: EmployeeFilters): Promise<Employee[]> => {
-    const response = await axiosInstance.get<Employee[]>("/api/employees/", {
-      params: filters
-    });
-    return response.data;
+  getAll: async (params?: { department?: string }) => {
+    // axios จะจัดการเปลี่ยน { department: "IT" } เป็น ?department=IT ให้โดยอัตโนมัติ
+    const response = await api.get("/api/employees/", { params });
+    // ตรวจสอบว่า Backend ของคุณใช้ Pagination หรือไม่ 
+    // ถ้าใช้ให้รีเทิร์น response.data.results
+    return response.data.results || response.data;
   },
 
   /**
