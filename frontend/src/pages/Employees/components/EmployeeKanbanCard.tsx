@@ -161,16 +161,23 @@ export const EmployeeKanbanCard = ({ employee, onAction }: EmployeeKanbanCardPro
           </div>
 
           {/* 3. ส่วนข้อมูลการติดต่อ */}
-          <div className="mt-5 w-full grid grid-cols-2 gap-2 border-t border-slate-100 pt-5">
-            <div className="flex flex-col items-center p-2 rounded-2xl hover:bg-[#4A7C59]/5 transition-colors duration-300">
-              <Mail size={14} className="text-[#2D3748]/30 mb-1" />
-              <span className="text-[10px] font-bold text-[#2D3748]/70 truncate w-full text-center">
-                {employee.email?.split('@')[0]}
+          <div className="mt-4 w-full grid grid-cols-1 gap-1 border-t border-slate-100 pt-4">
+            {/* Email Row */}
+            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#4A7C59]/5 transition-colors duration-300">
+              <div className="bg-slate-50 p-1.5 rounded-lg">
+                <Mail size={12} className="text-[#2D3748]/40" />
+              </div>
+              <span className="text-[11px] font-medium text-[#2D3748]/80 truncate flex-1">
+                {employee.email || "No Email"}
               </span>
             </div>
-            <div className="flex flex-col items-center p-2 rounded-2xl hover:bg-[#4A7C59]/5 transition-colors duration-300">
-              <MapPin size={14} className="text-[#2D3748]/30 mb-1" />
-              <span className="text-[10px] font-bold text-[#2D3748]/70 truncate w-full text-center">
+
+            {/* Location Row */}
+            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#4A7C59]/5 transition-colors duration-300">
+              <div className="bg-slate-50 p-1.5 rounded-lg">
+                <MapPin size={12} className="text-[#2D3748]/40" />
+              </div>
+              <span className="text-[11px] font-medium text-[#2D3748]/80 truncate flex-1">
                 {employee.department_name || "TMR HQ"}
               </span>
             </div>
