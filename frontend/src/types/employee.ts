@@ -2,15 +2,21 @@
 export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN';
 
 export interface Employee {
+  id: number;
+  employee_id: string | null;
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  role: 'admin' | 'supervisor' | 'staff';
+  department_name: string | null; 
+  position_name: string | null;
+  employment_type: 'full_time' | 'contract' | 'part_time';
+  phone_number: string | null; 
+  avatar?: string | null; 
+}
+
+export interface Department {
     id: number;
-    employee_id: string;
-    first_name: string;
-    last_name: string;
-    username: string;
-    department: string;
-    position: string;
-    employment_type: string;
-    email?: string;
-    phone?: string;
-    avatar?: string;
+    name: string;
 }

@@ -28,14 +28,26 @@ class EmployeeListSerializer(serializers.ModelSerializer):
     position_name = serializers.ReadOnlyField(source='position.name')
     full_name = serializers.SerializerMethodField()
 
+    # ใช้ SerializerMethodField เพื่อจัดการ URL หรือตรวจสอบค่า null
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
-            'id', 'employee_id', 'username', 'full_name', 
-            'first_name', 'last_name', 'department_name', 
-            'position_name', 'role', 'employment_type'
+            'id', 'employee_id', 'first_name', 'last_name', 'full_name',
+            'username', 'email', 'department_name', 
+            'position_name', 'employment_type', 'phone_number', 
+            'avatar', 'avatar_url'
         ]
         extra_kwargs = {'username': {'required': False}} # ทำให้ username ไม่ต้องกรอกในฟอร์ม
+
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
     def validate(self, attrs):
         # ถ้าไม่มี username ให้ใช้ email แทน

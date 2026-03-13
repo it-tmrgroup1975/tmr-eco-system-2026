@@ -31,6 +31,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # จำกัดที่ 5MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
 # อนุญาตให้ส่ง Credentials (เช่น Cookies หรือ Authorization Header)
 CORS_ALLOW_CREDENTIALS = True
 

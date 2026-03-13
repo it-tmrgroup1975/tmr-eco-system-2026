@@ -9,12 +9,12 @@ export const employeeApi = {
    */
   getAll: async (filters?: any) => {
     // แก้ไขจาก /api/users/ เป็น /api/employees/ ตาม router.register ใน core/urls.py
-    const response = await axiosInstance.get<Employee[]>("/api/employees/", { 
-      params: filters 
+    const response = await axiosInstance.get<Employee[]>("/api/employees/", {
+      params: filters
     });
     return response.data;
   },
-  
+
   /**
    * ดึงข้อมูลพนักงานรายบุคคล
    * Backend path: GET /api/employees/{id}/
@@ -28,8 +28,13 @@ export const employeeApi = {
    * สร้างพนักงานใหม่
    * Backend path: POST /api/employees/
    */
-  create: async (data: Partial<Employee>) => {
-    const response = await axiosInstance.post<Employee>("/api/employees/", data);
+  create: async (formData: FormData) => {
+    const response = await axiosInstance.post<Employee>("/api/employees/", formData, {
+      headers: {
+        // สำคัญ: ต้องระบุ Content-Type เป็น multipart/form-data สำหรับการส่งไฟล์
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 
@@ -37,8 +42,12 @@ export const employeeApi = {
    * อัปเดตข้อมูลพนักงาน
    * Backend path: PATCH /api/employees/{id}/
    */
-  update: async (id: string, data: Partial<Employee>) => {
-    const response = await axiosInstance.patch<Employee>(`/api/employees/${id}/`, data);
+  update: async (id: number, formData: FormData) => {
+    const response = await axiosInstance.put<Employee>(`/api/employees/${id}/`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 

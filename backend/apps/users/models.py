@@ -39,8 +39,16 @@ class User(AbstractUser):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
-    
-    # ... เพิ่มฟิลด์อื่นๆ ตามต้องการ ...
+    avatar = models.ImageField(
+        upload_to='avatars/', 
+        null=True, 
+        blank=True, 
+        verbose_name="รูปโปรไฟล์"
+    )
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
     class Meta:
         # ลบ db_table = 'auth_user' ออก

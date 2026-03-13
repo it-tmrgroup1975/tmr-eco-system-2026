@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { Loader2, Save, X } from "lucide-react";
-import type { Employee } from "../../../types/employee";
+import { Loader2, Save, X, Camera, Phone } from "lucide-react";
+import type { Employee, Department, Position } from "../../../types/employee";
 import { employeeApi } from "../../../api/employeeApi";
 
 interface EmployeeFormProps {
@@ -24,14 +24,19 @@ interface EmployeeFormProps {
 export default function EmployeeForm({ employee, onSuccess }: EmployeeFormProps) {
   const queryClient = useQueryClient();
   const isEditMode = !!employee;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- State สำหรับรูปภาพ ---
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // 1. ดึงข้อมูล Master Data จาก Backend
-  const { data: departments } = useQuery({
+  const { data: departments } = useQuery<Department[]>({
     queryKey: ["departments"],
     queryFn: () => employeeApi.getDepartments(),
   });
 
-  const { data: positions } = useQuery({
+  const { data: positions } = useQuery<Position[]>({
     queryKey: ["positions"],
     queryFn: () => employeeApi.getPositions(),
   });
@@ -39,7 +44,7 @@ export default function EmployeeForm({ employee, onSuccess }: EmployeeFormProps)
   // 2. Setup Form ด้วย React Hook Form
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<Partial<Employee>>({
     defaultValues: {
-      employment_type: "FULL_TIME",
+      employment_type: "full_time",
     },
   });
 
@@ -47,16 +52,36 @@ export default function EmployeeForm({ employee, onSuccess }: EmployeeFormProps)
   useEffect(() => {
     if (employee) {
       reset(employee);
+      if (employee.avatar) setPreviewUrl(employee.avatar);
     }
   }, [employee, reset]);
 
+  // ฟังก์ชันจัดการรูปภาพ
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("ขนาดไฟล์ต้องไม่เกิน 5MB");
+        return;
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   // 3. Mutation สำหรับ Create/Update
   const mutation = useMutation({
-    mutationFn: (data: Partial<Employee>) => {
+    mutationFn: (formData: FormData) => {
       if (isEditMode && employee?.id) {
-        return employeeApi.update(employee.id, data);
+        return employeeApi.update(employee.id, formData);
       }
-      return employeeApi.create(data);
+      return employeeApi.create(formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -64,126 +89,187 @@ export default function EmployeeForm({ employee, onSuccess }: EmployeeFormProps)
       onSuccess();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      const serverError = error.response?.data;
+      const message = typeof serverError === 'object'
+        ? Object.values(serverError).flat().join(", ")
+        : "เกิดข้อผิดพลาดในการบันทึกข้อมูล";
+      toast.error(message);
     },
   });
 
   const onSubmit = (data: Partial<Employee>) => {
-    const payload = {
-      ...data,
-      username: data.email, // ส่ง email ไปเป็น username เพื่อแก้ปัญหา field required
-      // หากยังไม่แก้ Backend ให้แปลงเป็นพิมพ์เล็กก่อนส่ง
-      employment_type: data.employment_type?.toLowerCase(),
-    };
-    mutation.mutate(payload);
+    const formData = new FormData();
+
+    // 1. ข้อมูล Text ปกติ
+    formData.append("first_name", data.first_name || "");
+    formData.append("last_name", data.last_name || "");
+    formData.append("email", data.email || "");
+    formData.append("username", data.email || "");
+    formData.append("phone_number", data.phone_number || "");
+    formData.append("employment_type", data.employment_type || "full_time");
+
+    // 2. Foreign Keys (ต้องส่งเป็น ID)
+    if (data.department) formData.append("department", String(data.department));
+    if (data.position) formData.append("position", String(data.position));
+
+    // 3. การส่งรูปภาพ (จุดสำคัญที่ทำให้เกิด Error)
+    // ต้องตรวจสอบว่า selectedFile คืออ็อบเจกต์ File ไม่ใช่ String
+    if (selectedFile instanceof File) {
+      formData.append("avatar", selectedFile);
+    }
+
+    mutation.mutate(formData);
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 font-thai">
+
+      {/* --- ส่วนอัปโหลดรูปภาพ Avatar --- */}
+      <div className="flex flex-col items-center justify-center space-y-3 pb-4">
+        <div className="relative group">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-28 h-28 rounded-[2.5rem] border-2 border-dashed border-[#4A7C59]/20 bg-[#4A7C59]/5 flex items-center justify-center cursor-pointer overflow-hidden transition-all hover:border-[#4A7C59]/50 hover:bg-[#4A7C59]/10 shadow-inner"
+          >
+            {previewUrl ? (
+              <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+            ) : (
+              <div className="flex flex-col items-center text-[#4A7C59]/40">
+                <Camera size={28} />
+                <span className="text-[10px] font-black mt-1 tracking-widest uppercase">Photo</span>
+              </div>
+            )}
+          </div>
+
+          {previewUrl && (
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="absolute -top-1 -right-1 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+        <p className="text-[11px] font-bold text-[#2D3748]/40 uppercase tracking-tighter">Profile Picture (JPG/PNG)</p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ชื่อ - นามสกุล */}
         <div className="space-y-2">
-          <Label htmlFor="first_name">ชื่อจริง</Label>
+          <Label htmlFor="first_name" className="text-[#2D3748]/70 font-bold">ชื่อจริง</Label>
           <Input
             id="first_name"
             {...register("first_name", { required: "กรุณากรอกชื่อจริง" })}
-            className={errors.first_name ? "border-destructive" : ""}
+            className={errors.first_name ? "border-destructive rounded-xl" : "rounded-xl border-[#4A7C59]/10"}
           />
-          {errors.first_name && <p className="text-xs text-destructive">{errors.first_name.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="last_name">นามสกุล</Label>
+          <Label htmlFor="last_name" className="text-[#2D3748]/70 font-bold">นามสกุล</Label>
           <Input
             id="last_name"
             {...register("last_name", { required: "กรุณากรอกนามสกุล" })}
-            className={errors.last_name ? "border-destructive" : ""}
+            className={errors.last_name ? "border-destructive rounded-xl" : "rounded-xl border-[#4A7C59]/10"}
           />
-          {errors.last_name && <p className="text-xs text-destructive">{errors.last_name.message}</p>}
         </div>
 
-        {/* อีเมล */}
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="email">อีเมลหน่วยงาน</Label>
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-[#2D3748]/70 font-bold">อีเมลหน่วยงาน</Label>
           <Input
             id="email"
             type="email"
-            {...register("email", {
-              required: "กรุณากรอกอีเมล",
-              pattern: { value: /^\S+@\S+$/i, message: "รูปแบบอีเมลไม่ถูกต้อง" }
-            })}
+            {...register("email", { required: "กรุณากรอกอีเมล" })}
+            className="rounded-xl border-[#4A7C59]/10"
           />
         </div>
 
-        {/* แผนก และ ตำแหน่ง (Dynamic จาก Backend) */}
         <div className="space-y-2">
-          <Label>แผนก</Label>
+          <Label htmlFor="phone_number" className="text-[#2D3748]/70 font-bold">เบอร์โทรศัพท์</Label>
+          <div className="relative">
+            <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A7C59]/40" />
+            <Input
+              id="phone_number"
+              {...register("phone_number")}
+              className="rounded-xl border-[#4A7C59]/10 pl-10"
+              placeholder="08X-XXX-XXXX"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-[#2D3748]/70 font-bold">แผนก</Label>
           <Select
-            onValueChange={(val) => setValue("department", val)}
-            defaultValue={employee?.department}
+            onValueChange={(val) => setValue("department", Number(val) as any)} // ตรวจสอบว่ามี Number(val)
+            defaultValue={employee?.department?.toString()}
           >
-            <SelectTrigger>
+            <SelectTrigger className="rounded-xl border-[#4A7C59]/10">
               <SelectValue placeholder="เลือกแผนก" />
             </SelectTrigger>
             <SelectContent>
-              {departments?.map((dept: any) => (
-                <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+              {departments?.map((dept) => (
+                <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>ตำแหน่ง</Label>
+          <Label className="text-[#2D3748]/70 font-bold">ตำแหน่ง</Label>
           <Select
-            onValueChange={(val) => setValue("position", val)}
-            defaultValue={employee?.position}
+            onValueChange={(val) => setValue("position", Number(val) as any)} // ตรวจสอบว่ามี Number(val)
+            defaultValue={employee?.position?.toString()}
           >
-            <SelectTrigger>
+            <SelectTrigger className="rounded-xl border-[#4A7C59]/10">
               <SelectValue placeholder="เลือกตำแหน่ง" />
             </SelectTrigger>
             <SelectContent>
-              {positions?.map((pos: any) => (
-                <SelectItem key={pos.id} value={pos.name}>{pos.name}</SelectItem>
+              {positions?.map((pos) => (
+                <SelectItem key={pos.id} value={pos.id.toString()}>{pos.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* ประเภทการจ้างงาน */}
-        <div className="space-y-2">
-          <Label>ประเภทการจ้างงาน</Label>
+        <div className="space-y-2 md:col-span-2">
+          <Label className="text-[#2D3748]/70 font-bold">ประเภทการจ้างงาน</Label>
           <Select
             onValueChange={(val: any) => setValue("employment_type", val)}
-            defaultValue={employee?.employment_type || "FULL_TIME"}
+            defaultValue={employee?.employment_type || "full_time"}
           >
-            <SelectTrigger>
+            <SelectTrigger className="rounded-xl border-[#4A7C59]/10">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="FULL_TIME">พนักงานประจำ (Full-time)</SelectItem>
-              <SelectItem value="PART_TIME">พนักงานชั่วคราว (Part-time)</SelectItem>
-              <SelectItem value="CONTRACT">สัญญาจ้าง (Contract)</SelectItem>
+              <SelectItem value="full_time">พนักงานประจำ (Full-time)</SelectItem>
+              <SelectItem value="contract">สัญญาจ้าง (Contract)</SelectItem>
+              <SelectItem value="part_time">พนักงานชั่วคราว (Part-time)</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-6 border-t">
-        <Button type="button" variant="outline" onClick={onSuccess} className="rounded-xl">
-          <X className="mr-2 h-4 w-4" /> ยกเลิก
+      <div className="flex justify-end gap-3 pt-6 border-t border-[#2D3748]/5">
+        <Button type="button" variant="ghost" onClick={onSuccess} className="rounded-xl text-[#2D3748]/40 hover:text-red-500">
+          ยกเลิก
         </Button>
         <Button
           type="submit"
           disabled={mutation.isPending}
-          className="bg-[#4A7C59] hover:bg-[#3d664a] text-white rounded-xl px-8 shadow-lg shadow-[#4A7C59]/20"
+          className="bg-[#4A7C59] hover:bg-[#3d664a] text-white rounded-xl px-10 h-12 shadow-lg shadow-[#4A7C59]/20 gap-2 font-bold active:scale-95 transition-all"
         >
           {mutation.isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <Save className="mr-2 h-4 w-4" />
+            <Save size={18} />
           )}
-          {isEditMode ? "บันทึกการแก้ไข" : "สร้างโปรไฟล์พนักงาน"}
+          {isEditMode ? "อัปเดตข้อมูล" : "สร้างโปรไฟล์"}
         </Button>
       </div>
     </form>
