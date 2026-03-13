@@ -68,11 +68,20 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
           </div>
         </div>
 
-        {/* Department & Position */}
+        {/* Department & Position (Logic Fixed) */}
         <div className="space-y-2">
           <Label className="text-[#2D3748]/70 font-bold">แผนก</Label>
-          <Select disabled={isViewMode} onValueChange={(val) => { setValue("department", val); setValue("position", ""); }} value={watchDepartment}>
-            <SelectTrigger className="rounded-xl"><SelectValue placeholder="เลือกแผนก" /></SelectTrigger>
+          <Select 
+            disabled={isViewMode} 
+            onValueChange={(val) => { 
+              setValue("department", val, { shouldValidate: true }); 
+              setValue("position", ""); // เมื่อเปลี่ยนแผนก ให้ล้างตำแหน่งทันที
+            }} 
+            value={watchDepartment ? String(watchDepartment) : ""}
+          >
+            <SelectTrigger className={cn("rounded-xl", errors.department && "border-destructive")}>
+              <SelectValue placeholder="เลือกแผนก" />
+            </SelectTrigger>
             <SelectContent className="font-thai">
               {departments?.map((dept) => <SelectItem key={dept.id} value={String(dept.id)}>{dept.name}</SelectItem>)}
             </SelectContent>
@@ -81,8 +90,14 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
 
         <div className="space-y-2">
           <Label className="text-[#2D3748]/70 font-bold">ตำแหน่ง</Label>
-          <Select disabled={isViewMode || !watchDepartment} onValueChange={(val) => setValue("position", val)} value={watchPosition}>
-            <SelectTrigger className="rounded-xl"><SelectValue placeholder={!watchDepartment ? "กรุณาเลือกแผนกก่อน" : "เลือกตำแหน่ง"} /></SelectTrigger>
+          <Select 
+            disabled={isViewMode || !watchDepartment} 
+            onValueChange={(val) => setValue("position", val, { shouldValidate: true })} 
+            value={watchPosition ? String(watchPosition) : ""}
+          >
+            <SelectTrigger className={cn("rounded-xl", errors.position && "border-destructive")}>
+              <SelectValue placeholder={!watchDepartment ? "กรุณาเลือกแผนกก่อน" : "เลือกตำแหน่ง"} />
+            </SelectTrigger>
             <SelectContent className="font-thai">
               {filteredPositions.map((pos) => <SelectItem key={pos.id} value={String(pos.id)}>{pos.name}</SelectItem>)}
             </SelectContent>
@@ -108,7 +123,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
         {!isViewMode && (
           <Button type="submit" disabled={isPending} className="bg-[#4A7C59] hover:bg-[#3d664a] text-white rounded-xl px-10 h-12 shadow-lg font-bold">
             {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save size={18} />}
-            {mode === "edit" ? "บันทึกข้อมูล" : "สร้างโปรไฟล์"}
+            &nbsp;{mode === "edit" ? "บันทึกข้อมูล" : "สร้างโปรไฟล์"}
           </Button>
         )}
       </div>

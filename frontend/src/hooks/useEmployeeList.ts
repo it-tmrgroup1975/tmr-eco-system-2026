@@ -6,14 +6,23 @@ import type { Department, Employee } from "../types/employee";
 import { employeeApi } from "../api/employeeApi";
 
 export const useEmployeeList = () => {
+  // --- UI & Dialog State ---
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+
+  // --- Search & Filter State ---
   const [activeDept, setActiveDept] = useState("ทั้งหมด");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    employment_type: "",
+    position: "",
+  });
+
   const { deleteEmployee } = useEmployeeActions();
 
-  // ดึงข้อมูลแผนก
+  // ดึงข้อมูลแผนกสำหรับแสดงใน Header
   const { data: departmentsData } = useQuery<Department[]>({
     queryKey: ["departments"],
     queryFn: () => employeeApi.getDepartments(),
@@ -21,18 +30,19 @@ export const useEmployeeList = () => {
 
   const departments = ["ทั้งหมด", ...(departmentsData?.map((dept) => dept.name) || [])];
 
-  // ดึงข้อมูลพนักงานตามแผนก
+  // ดึงข้อมูลพนักงาน: ระบบจะ Auto-refetch เมื่อ activeDept, searchTerm หรือ filters เปลี่ยน
   const { data: employees, isLoading, isError } = useQuery<Employee[]>({
-    // เพิ่ม activeDept เข้าไปใน queryKey เพื่อให้เกิดการ Refetch เมื่อเปลี่ยนแผนก
-    queryKey: ["employees", activeDept],
-    queryFn: () => employeeApi.getAll({
-      // ส่งชื่อแผนกไปที่ API (ถ้าเลือก "ทั้งหมด" ให้ส่ง undefined เพื่อไม่กรอง)
-      department: activeDept === "ทั้งหมด" ? undefined : activeDept
-    }),
+    queryKey: ["employees", activeDept, searchTerm, filters],
+    queryFn: () =>
+      employeeApi.getAll({
+        department: activeDept === "ทั้งหมด" ? undefined : activeDept,
+        search: searchTerm || undefined,
+        employment_type: filters.employment_type || undefined,
+        position: filters.position || undefined,
+      }),
   });
 
   const handleOpenForm = (mode: "create" | "edit" | "view", emp: Employee | null = null) => {
-    setSelectedEmployee(null);
     setFormMode(mode);
     setSelectedEmployee(emp);
     setIsDialogOpen(true);
@@ -45,7 +55,29 @@ export const useEmployeeList = () => {
   };
 
   return {
-    state: { isDialogOpen, selectedEmployee, formMode, viewMode, activeDept, departments, employees, isLoading, isError },
-    actions: { setIsDialogOpen, setSelectedEmployee, setFormMode, setViewMode, setActiveDept, handleOpenForm, handleDelete }
+    state: {
+      isDialogOpen,
+      selectedEmployee,
+      formMode,
+      viewMode,
+      activeDept,
+      departments,
+      employees,
+      isLoading,
+      isError,
+      searchTerm,
+      filters,
+    },
+    actions: {
+      setIsDialogOpen,
+      setSelectedEmployee,
+      setFormMode,
+      setViewMode,
+      setActiveDept,
+      setSearchTerm,
+      setFilters,
+      handleOpenForm,
+      handleDelete,
+    },
   };
 };

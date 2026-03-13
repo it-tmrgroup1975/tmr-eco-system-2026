@@ -11,10 +11,13 @@ export default function EmployeeListPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {/* เชื่อมต่อ State และ Actions สำหรับระบบ Search */}
       <EmployeeListHeader 
         departments={state.departments}
         activeDept={state.activeDept}
         viewMode={state.viewMode}
+        searchTerm={state.searchTerm} //
+        onSearchChange={actions.setSearchTerm} //
         onViewModeChange={actions.setViewMode}
         onDeptChange={actions.setActiveDept}
         onAddClick={() => actions.handleOpenForm("create")}
@@ -26,15 +29,20 @@ export default function EmployeeListPage() {
         </div>
       ) : (
         <div className="animate-in fade-in duration-500">
-          {state.viewMode === "kanban" ? (
+          {/* แสดงผลข้อความเมื่อค้นหาไม่พบพนักงาน */}
+          {!state.employees || state.employees.length === 0 ? (
+            <div className="py-20 text-center text-[#2D3748]/40 font-thai bg-white/20 rounded-3xl border border-dashed border-[#2D3748]/10">
+              ไม่พบข้อมูลพนักงานที่ค้นหา
+            </div>
+          ) : state.viewMode === "kanban" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-10">
-              {state.employees?.map((emp) => (
+              {state.employees.map((emp) => (
                 <EmployeeKanbanCard key={emp.id} employee={emp} onAction={actions.handleOpenForm} />
               ))}
             </div>
           ) : (
             <EmployeeTableView 
-              employees={state.employees || []} 
+              employees={state.employees} 
               onAction={actions.handleOpenForm}
               onDelete={actions.handleDelete}
             />

@@ -30,20 +30,15 @@ class LoginView(TokenObtainPairView):
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     """
-    ViewSet สำหรับจัดการข้อมูลพนักงาน (CRUD)
-    รองรับ: GET (list/retrieve), POST (create), PUT/PATCH (update), DELETE (destroy)
+    ViewSet สำหรับจัดการข้อมูลพนักงาน (CRUD) พร้อมระบบกรองข้อมูลอัจฉริยะ
     """
     queryset = User.objects.all().select_related('department', 'position').order_by('-date_joined')
     serializer_class = EmployeeListSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        ปรับปรุง Queryset รองรับการค้นหา (Search) และการกรองตามแผนก (Department Filter)
-        """
         queryset = super().get_queryset()
         
-        # 1. รับค่าการค้นหา (Search)
+        # 1. ระบบ Search (ชื่อ, นามสกุล, รหัสพนักงาน)
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
@@ -52,12 +47,22 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 models.Q(employee_id__icontains=search)
             )
             
-        # 2. เพิ่มการกรองตามแผนก (Department Filter)
-        # รับค่าชื่อแผนกที่ส่งมาจาก Frontend (activeDept)
-        department_name = self.request.query_params.get('department', None)
-        if department_name:
-            # กรองโดยใช้ชื่อแผนกผ่านความสัมพันธ์ ForeignKey ไปยังโมเดล Department
-            queryset = queryset.filter(department__name=department_name)
+        # 2. กรองตามแผนก (Smart Filter: รองรับทั้งชื่อแผนก หรือ ID)
+        department = self.request.query_params.get('department', None)
+        if department and department != "ทั้งหมด":
+            if department.isdigit():
+                queryset = queryset.filter(department_id=department)
+            else:
+                queryset = queryset.filter(department__name=department)
+        
+        # 3. Advanced Filters (ตำแหน่ง และ ประเภทการจ้างงาน)
+        position = self.request.query_params.get('position', None)
+        employment_type = self.request.query_params.get('employment_type', None)
+        
+        if position:
+            queryset = queryset.filter(position_id=position)
+        if employment_type:
+            queryset = queryset.filter(employment_type=employment_type)
             
         return queryset
 
