@@ -33,10 +33,8 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'employee_id', 'first_name', 'last_name', 'full_name',
-            'username', 'email', 'phone_number',  # เปลี่ยนให้ตรงกับชื่อ field ใน Model/Frontend
-            'department', 'department_name', # เพิ่ม department (writable)
-            'position', 'position_name',     # เพิ่ม position (writable)
-            'employment_type', 'avatar', 'avatar_url'
+            'username', 'email', 'phone_number', 'department', 'department_name',
+            'position', 'position_name', 'employment_type', 'avatar', 'avatar_url'
         ]
         extra_kwargs = {
             'username': {'required': False},

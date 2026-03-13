@@ -1,5 +1,16 @@
 // frontend/src/types/employee.ts
-export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN';
+export type EmploymentType = 'full_time' | 'part_time' | 'contract';
+
+export interface EmployeeFormInput {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  employment_type: string;
+  department: string;
+  position: string;
+}
+
 
 export interface Employee {
   id: number;
@@ -27,4 +38,5 @@ export interface Department {
 export interface Position {
     id: number;
     name: string;
+    department: number;
 }
