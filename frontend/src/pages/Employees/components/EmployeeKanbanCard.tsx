@@ -1,126 +1,215 @@
-import { Mail, Phone, MapPin, Briefcase, User } from "lucide-react";
+import { useState } from "react";
+import { Mail, MapPin, User, Eye, MoreVertical, Pencil, Trash2, Verified } from "lucide-react";
 import type { Employee } from "../../../types/employee";
 import { Card, CardContent } from "../../../components/ui/card";
 import { cn } from "../../../lib/utils";
 import { Badge } from "../../../components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../../../components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../../components/ui/alert-dialog";
+import { useEmployeeActions } from "../../../hooks/useEmployeeActions";
 
 interface EmployeeKanbanCardProps {
   employee: Employee;
-  onClick?: (employee: Employee) => void;
+  // onAction สำหรับระบุโหมดการทำงานกลับไปยัง EmployeeListPage
+  onAction?: (mode: "edit" | "view", employee: Employee) => void;
 }
 
-export const EmployeeKanbanCard = ({ employee, onClick }: EmployeeKanbanCardProps) => {
-  // Mapping สีสำหรับสถานะการจ้างงาน
+export const EmployeeKanbanCard = ({ employee, onAction }: EmployeeKanbanCardProps) => {
+  const { deleteEmployee } = useEmployeeActions();
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+
   const getEmploymentTypeStyles = (type: string) => {
     const t = type?.toLowerCase();
     switch (t) {
       case "full_time":
       case "full-time":
-        return "bg-[#4A7C59]/10 text-[#4A7C59] border-[#4A7C59]/20";
+        return "bg-emerald-500 text-white";
       case "contract":
-        return "bg-blue-50 text-blue-600 border-blue-100";
+        return "bg-blue-500 text-white";
       default:
-        return "bg-slate-100 text-slate-600 border-slate-200";
+        return "bg-slate-400 text-white";
     }
   };
 
   const employmentLabel = {
-    full_time: "พนักงานประจำ",
+    full_time: "ประจำ",
     contract: "สัญญาจ้าง",
     part_time: "ชั่วคราว",
   }[employee.employment_type?.toLowerCase()] || employee.employment_type;
 
+  // ฟังก์ชันยืนยันการลบผ่าน useEmployeeActions
+  const confirmDelete = () => {
+    deleteEmployee(employee.id);
+    setShowDeleteAlert(false);
+  };
+
   return (
-    <Card
-      onClick={() => onClick?.(employee)}
-      className={cn(
-        "group cursor-pointer transition-all duration-500 relative overflow-hidden",
-        "bg-white/70 backdrop-blur-md border-white/40",
-        "shadow-soft-double hover:shadow-2xl hover:-translate-y-2",
-        "rounded-[2rem] border"
-      )}
-    >
-      {/* ส่วนตกแต่ง Background (Glassmorphism Effect) */}
-      <div className="absolute -top-6 -right-6 w-24 h-24 bg-[#4A7C59]/5 rounded-full blur-2xl group-hover:bg-[#4A7C59]/10 transition-colors duration-500" />
+    <>
+      <Card
+        // คลิกที่ Card โดยตรงให้เปิดโหมด View เสมอ
+        onClick={() => onAction?.("view", employee)}
+        className={cn(
+          "group cursor-pointer transition-all duration-500 relative overflow-hidden",
+          "bg-white/80 backdrop-blur-md border-white/50 shadow-soft-double hover:shadow-2xl hover:-translate-y-1",
+          "rounded-[2.5rem] border h-full"
+        )}
+      >
+        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-[#4A7C59]/20 to-transparent -z-0" />
 
-      <CardContent className="p-6 relative z-10">
-        <div className="flex gap-5 items-start">
-          {/* 1. ส่วนรูปภาพขนาดใหญ่ (Avatar Section) */}
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-2xl bg-[#F1F5F9] border-4 border-white overflow-hidden shadow-md group-hover:shadow-lg transition-all duration-500">
-              {employee.avatar ? (
-                <img
-                  src={employee.avatar}
-                  alt={`${employee.first_name} ${employee.last_name}`}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center');
+        <CardContent className="p-6 relative z-10 flex flex-col items-center">
+          {/* Actions Menu */}
+          <div className="absolute top-4 right-4 z-20">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/50 hover:bg-white shadow-sm text-[#2D3748]/60 transition-all outline-none"
+                  onClick={(e) => e.stopPropagation()} // ป้องกัน event bubbling ไปยัง Card
+                >
+                  <MoreVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 p-2 rounded-2xl border-none bg-white/95 backdrop-blur-xl shadow-2xl font-thai">
+
+                {/* ปุ่ม View ใน Dropdown */}
+                <DropdownMenuItem
+                  className="flex items-center gap-2 p-2.5 rounded-xl cursor-pointer hover:bg-[#4A7C59]/5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction?.("view", employee);
                   }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#4A7C59]/10 text-[#4A7C59] font-black text-2xl uppercase">
-                  {employee.first_name?.[0]}
-                </div>
-              )}
-            </div>
-            {/* สถานะ Online (Indicator) */}
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-white rounded-full shadow-sm" />
+                >
+                  <Eye size={16} className="text-[#4A7C59]" />
+                  <span className="font-bold text-sm text-[#2D3748]">ดูรายละเอียด</span>
+                </DropdownMenuItem>
+
+                {/* ปุ่ม Edit ใน Dropdown */}
+                <DropdownMenuItem
+                  className="flex items-center gap-2 p-2.5 rounded-xl cursor-pointer hover:bg-[#4A7C59]/5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction?.("edit", employee);
+                  }}
+                >
+                  <Pencil size={16} className="text-blue-500" />
+                  <span className="font-bold text-sm text-[#2D3748]">แก้ไขข้อมูล</span>
+                </DropdownMenuItem>
+
+                <div className="h-px bg-[#2D3748]/5 my-1" />
+
+                {/* ปุ่ม Delete ใน Dropdown */}
+                <DropdownMenuItem
+                  className="flex items-center gap-2 p-2.5 rounded-xl cursor-pointer hover:bg-red-50 text-red-500 focus:bg-red-50 focus:text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteAlert(true);
+                  }}
+                >
+                  <Trash2 size={16} />
+                  <span className="font-bold text-sm font-thai">ลบพนักงาน</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* 2. ข้อมูลพนักงาน (Info Section) */}
-          <div className="flex-1 min-w-0 pt-1">
-            <div className="flex flex-col gap-1">
-              <h3 className="font-thai font-black text-xl text-[#2D3748] leading-tight truncate group-hover:text-[#4A7C59] transition-colors">
-                {employee.first_name} {employee.last_name}
-              </h3>
-              <p className="text-[#4A7C59] text-xs font-bold italic tracking-wide">
-                {employee.position_name || "ไม่มีระบุตำแหน่ง"}
-              </p>
-            </div>
-
-            {/* Badge ประเภทการจ้างงาน */}
-            <div className="mt-3">
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "font-thai font-bold text-[10px] px-3 py-0.5 rounded-full border shadow-sm",
-                  getEmploymentTypeStyles(employee.employment_type)
+          {/* 1. ส่วนรูปภาพ (Avatar) */}
+          <div className="relative mb-4">
+            <div className="w-28 h-28 rounded-full p-1 bg-white shadow-lg group-hover:shadow-xl transition-all duration-500">
+              <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border border-slate-100">
+                {employee.avatar ? (
+                  <img
+                    src={employee.avatar}
+                    alt={employee.first_name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-[#4A7C59]/5 text-[#4A7C59]/30">
+                    <User size={48} strokeWidth={1.5} />
+                  </div>
                 )}
-              >
-                {employmentLabel}
-              </Badge>
+              </div>
+            </div>
+            <div className="absolute bottom-1 right-1 bg-white p-1 rounded-full shadow-md">
+              <Verified size={18} className="text-[#4A7C59] fill-[#4A7C59]/10" />
             </div>
           </div>
-        </div>
 
-        {/* 3. รายละเอียดการติดต่อ (Contact Details) */}
-        <div className="mt-6 space-y-2.5">
-          <div className="flex items-center gap-3 text-[#2D3748]/50 group-hover:text-[#2D3748]/80 transition-colors duration-300">
-            <div className="p-1.5 bg-slate-50 rounded-lg">
-              <Mail size={14} className="shrink-0" />
-            </div>
-            <span className="text-xs font-medium truncate">{employee.email}</span>
+          {/* 2. ข้อมูลพนักงาน */}
+          <div className="text-center w-full space-y-1">
+            <Badge className={cn("mb-2 px-3 py-0 rounded-lg font-thai font-bold text-[9px] border-none shadow-none", getEmploymentTypeStyles(employee.employment_type))}>
+              {employmentLabel}
+            </Badge>
+            <h3 className="font-thai font-black text-xl text-[#2D3748] truncate">
+              {employee.first_name} {employee.last_name}
+            </h3>
+            <p className="text-[#4A7C59] text-[11px] font-black uppercase tracking-widest bg-[#4A7C59]/5 py-1 px-3 rounded-full inline-block">
+              {employee.position_name || "General Staff"}
+            </p>
           </div>
-          
-          <div className="flex items-center gap-3 text-[#2D3748]/50 group-hover:text-[#2D3748]/80 transition-colors duration-300">
-            <div className="p-1.5 bg-slate-50 rounded-lg">
-              <MapPin size={14} className="shrink-0" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-tighter">
-              {employee.department_name || "ทั่วไป / สำนักงานใหญ่"}
-            </span>
-          </div>
-        </div>
 
-        {/* 4. ขอบล่าง Action Decorator */}
-        <div className="mt-5 pt-4 border-t border-slate-100 flex justify-between items-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-          <span className="text-[10px] font-black text-[#4A7C59] uppercase tracking-[0.2em]">
-            TMR 2026 Profile
-          </span>
-          <div className="h-1.5 w-1.5 rounded-full bg-[#4A7C59] animate-pulse" />
-        </div>
-      </CardContent>
-    </Card>
+          {/* 3. ส่วนข้อมูลการติดต่อ */}
+          <div className="mt-5 w-full grid grid-cols-2 gap-2 border-t border-slate-100 pt-5">
+            <div className="flex flex-col items-center p-2 rounded-2xl hover:bg-[#4A7C59]/5 transition-colors duration-300">
+              <Mail size={14} className="text-[#2D3748]/30 mb-1" />
+              <span className="text-[10px] font-bold text-[#2D3748]/70 truncate w-full text-center">
+                {employee.email?.split('@')[0]}
+              </span>
+            </div>
+            <div className="flex flex-col items-center p-2 rounded-2xl hover:bg-[#4A7C59]/5 transition-colors duration-300">
+              <MapPin size={14} className="text-[#2D3748]/30 mb-1" />
+              <span className="text-[10px] font-bold text-[#2D3748]/70 truncate w-full text-center">
+                {employee.department_name || "TMR HQ"}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AlertDialog สำหรับยืนยันการลบข้อมูลบุคลากร */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent className="rounded-[2rem] border-none bg-white/95 backdrop-blur-xl font-thai shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black text-[#2D3748]">
+              ยืนยันการลบข้อมูลพนักงาน?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base font-medium text-[#2D3748]/60">
+              คุณกำลังจะลบข้อมูลของ <span className="text-[#4A7C59] font-bold">{employee.first_name} {employee.last_name}</span> ออกจากระบบ TMR 2026 การดำเนินการนี้ไม่สามารถย้อนกลับได้ และไฟล์ที่เกี่ยวข้องจะถูกถอนการติดตั้งทั้งหมด
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-4">
+            <AlertDialogCancel
+              variant={'default'}
+              size={'default'}
+              className="rounded-xl border-[#2D3748]/10 hover:border-black font-bold hover:bg-slate-100 m-0 hover:text-black">
+              ยกเลิก
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant={'default'}
+              size={'default'}
+              onClick={(e) => {
+                e.stopPropagation();
+                confirmDelete();
+              }}
+              className="rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold shadow-lg shadow-red-500/20 m-0"
+            >
+              ยืนยันการลบข้อมูล
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

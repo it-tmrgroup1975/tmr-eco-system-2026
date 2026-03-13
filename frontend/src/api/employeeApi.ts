@@ -1,14 +1,23 @@
 // frontend/src/api/employeeApi.ts
-import type { Employee } from "../types/employee";
+import type { Employee, Department, Position } from "../types/employee";
 import axiosInstance from "./axios";
+
+/**
+ * Interface สำหรับ Filter ในการดึงข้อมูลพนักงาน
+ */
+interface EmployeeFilters {
+  department?: string | number;
+  position?: string | number;
+  search?: string;
+  [key: string]: any;
+}
 
 export const employeeApi = {
   /**
    * ดึงรายชื่อพนักงานทั้งหมด
-   * Backend path: GET /api/employees/
+   * ระบุ Type เป็น Employee[] เพื่อให้ TanStack Query ใช้งานได้ทันที
    */
-  getAll: async (filters?: any) => {
-    // แก้ไขจาก /api/users/ เป็น /api/employees/ ตาม router.register ใน core/urls.py
+  getAll: async (filters?: EmployeeFilters): Promise<Employee[]> => {
     const response = await axiosInstance.get<Employee[]>("/api/employees/", {
       params: filters
     });
@@ -17,21 +26,20 @@ export const employeeApi = {
 
   /**
    * ดึงข้อมูลพนักงานรายบุคคล
-   * Backend path: GET /api/employees/{id}/
+   * ปรับ ID ให้รับได้ทั้ง string และ number เพื่อป้องกัน Type Mismatch
    */
-  getById: async (id: string) => {
+  getById: async (id: string | number): Promise<Employee> => {
     const response = await axiosInstance.get<Employee>(`/api/employees/${id}/`);
     return response.data;
   },
 
   /**
    * สร้างพนักงานใหม่
-   * Backend path: POST /api/employees/
+   * ใช้ FormData สำหรับรองรับการอัปโหลดไฟล์ (avatar)
    */
-  create: async (formData: FormData) => {
+  create: async (formData: FormData): Promise<Employee> => {
     const response = await axiosInstance.post<Employee>("/api/employees/", formData, {
       headers: {
-        // สำคัญ: ต้องระบุ Content-Type เป็น multipart/form-data สำหรับการส่งไฟล์
         "Content-Type": "multipart/form-data",
       },
     });
@@ -40,10 +48,11 @@ export const employeeApi = {
 
   /**
    * อัปเดตข้อมูลพนักงาน
-   * Backend path: PATCH /api/employees/{id}/
+   * ใช้ PATCH เพื่อความยืดหยุ่นในการอัปเดตเฉพาะบางฟิลด์
    */
-  update: async (id: number, formData: FormData) => {
-    const response = await axiosInstance.put<Employee>(`/api/employees/${id}/`, formData, {
+  update: async (id: string | number, formData: FormData): Promise<Employee> => {
+    // เปลี่ยนจาก .put เป็น .patch ตามมาตรฐาน DRF สำหรับการอัปเดตบางส่วน
+    const response = await axiosInstance.patch<Employee>(`/api/employees/${id}/`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -53,27 +62,25 @@ export const employeeApi = {
 
   /**
    * ลบข้อมูลพนักงาน
-   * Backend path: DELETE /api/employees/{id}/
+   * ปรับ ID ให้รับได้ทั้ง string และ number
    */
-  delete: async (id: string) => {
+  delete: async (id: string | number): Promise<void> => {
     await axiosInstance.delete(`/api/employees/${id}/`);
   },
 
   /**
-   * ดึงรายชื่อแผนกทั้งหมดจาก Backend
-   * Path: GET /api/departments/
+   * ดึงรายชื่อแผนกทั้งหมด
    */
-  getDepartments: async () => {
-    const response = await axiosInstance.get("/api/departments/");
-    return response.data; // ข้อมูลที่ได้จะเป็น Array ของวัตถุแผนก
+  getDepartments: async (): Promise<Department[]> => {
+    const response = await axiosInstance.get<Department[]>("/api/departments/");
+    return response.data;
   },
 
   /**
-   * ดึงรายชื่อแผนกทั้งหมดจาก Backend
-   * Path: GET /api/departments/
+   * ดึงรายชื่อตำแหน่งงานทั้งหมด
    */
-  getPositions: async () => {
-    const response = await axiosInstance.get("/api/positions/");
-    return response.data; // ข้อมูลที่ได้จะเป็น Array ของวัตถุแผนก
+  getPositions: async (): Promise<Position[]> => {
+    const response = await axiosInstance.get<Position[]>("/api/positions/");
+    return response.data;
   },
 };

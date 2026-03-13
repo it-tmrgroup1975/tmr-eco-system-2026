@@ -11,6 +11,8 @@ export interface Employee {
   role: 'admin' | 'supervisor' | 'staff';
   department_name: string | null; 
   position_name: string | null;
+  department: string | null; 
+  position: string | null;
   employment_type: 'full_time' | 'contract' | 'part_time';
   phone_number: string | null; 
   avatar?: string | null; 
@@ -18,6 +20,11 @@ export interface Employee {
 }
 
 export interface Department {
+    id: number;
+    name: string;
+}
+
+export interface Position {
     id: number;
     name: string;
 }
