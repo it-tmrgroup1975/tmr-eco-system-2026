@@ -14,6 +14,7 @@ export interface Employee {
   employment_type: 'full_time' | 'contract' | 'part_time';
   phone_number: string | null; 
   avatar?: string | null; 
+  avatar_url?: string;
 }
 
 export interface Department {

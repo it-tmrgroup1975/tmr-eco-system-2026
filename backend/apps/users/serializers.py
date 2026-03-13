@@ -27,19 +27,22 @@ class EmployeeListSerializer(serializers.ModelSerializer):
     department_name = serializers.ReadOnlyField(source='department.name')
     position_name = serializers.ReadOnlyField(source='position.name')
     full_name = serializers.SerializerMethodField()
-
-    # ใช้ SerializerMethodField เพื่อจัดการ URL หรือตรวจสอบค่า null
     avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'employee_id', 'first_name', 'last_name', 'full_name',
-            'username', 'email', 'department_name', 
-            'position_name', 'employment_type', 'phone_number', 
-            'avatar', 'avatar_url'
+            'username', 'email', 'phone_number',  # เปลี่ยนให้ตรงกับชื่อ field ใน Model/Frontend
+            'department', 'department_name', # เพิ่ม department (writable)
+            'position', 'position_name',     # เพิ่ม position (writable)
+            'employment_type', 'avatar', 'avatar_url'
         ]
-        extra_kwargs = {'username': {'required': False}} # ทำให้ username ไม่ต้องกรอกในฟอร์ม
+        extra_kwargs = {
+            'username': {'required': False},
+            'department': {'write_only': True}, # รับค่าตอนสร้าง แต่ไม่ส่งออกตอน Get
+            'position': {'write_only': True},
+        }
 
     def get_avatar_url(self, obj):
         if obj.avatar:
