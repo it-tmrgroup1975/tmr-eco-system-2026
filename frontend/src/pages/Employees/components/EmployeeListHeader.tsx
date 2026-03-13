@@ -1,21 +1,31 @@
-// frontend/src/pages/Employees/components/EmployeeListHeader.tsx
-import { Search, SlidersHorizontal, UserPlus, LayoutGrid, List as ListIcon } from "lucide-react";
+import { 
+  Search, 
+  SlidersHorizontal, 
+  UserPlus, 
+  LayoutGrid, 
+  List as ListIcon,
+  FileDown, // ไอคอนสำหรับ Export
+  FileUp    // ไอคอนสำหรับ Import
+} from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { cn } from "../../../lib/utils";
-import { DepartmentCombobox } from "./DepartmentCombobox"; // นำเข้าคอมโพเนนต์ที่สร้างขึ้น
+import { DepartmentCombobox } from "./DepartmentCombobox";
 import type { Department } from "../../../types/employee";
 
 interface Props {
-  departments: Department[]; // เปลี่ยนจาก string[] เป็น Department[] เพื่อใช้ ID-Based
+  departments: Department[];
   activeDept: string;
   viewMode: "kanban" | "list";
   searchTerm: string;
   onSearchChange: (value: string) => void;
   onViewModeChange: (mode: "kanban" | "list") => void;
-  onDeptChange: (id: string) => void; // เปลี่ยนชื่อพารามิเตอร์เป็น id เพื่อความชัดเจน
+  onDeptChange: (id: string) => void;
   onAddClick: () => void;
   onAdvancedFilterClick?: () => void;
+  // เพิ่ม Props ใหม่สำหรับการจัดการไฟล์
+  onExportClick: () => void;
+  onImportChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const EmployeeListHeader = ({ 
@@ -27,7 +37,9 @@ export const EmployeeListHeader = ({
   onViewModeChange, 
   onDeptChange, 
   onAddClick,
-  onAdvancedFilterClick 
+  onAdvancedFilterClick,
+  onExportClick,   // ดึงมาใช้งาน
+  onImportChange   // ดึงมาใช้งาน
 }: Props) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -38,7 +50,42 @@ export const EmployeeListHeader = ({
           </h1>
           <p className="text-[#2D3748]/50 font-thai font-medium">จัดการข้อมูลพนักงานและโครงสร้างองค์กร</p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* --- ปุ่ม Export --- */}
+          <Button 
+            variant="outline" 
+            onClick={onExportClick}
+            className="border-[#2D3748]/10 text-[#2D3748]/60 hover:bg-[#2D3748]/5 rounded-2xl h-14 px-5 gap-2 font-bold font-thai transition-all"
+          >
+            <FileDown size={20} className="text-[#4A7C59]" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+
+          {/* --- ปุ่ม Import (Hidden Input Trick) --- */}
+          <div className="relative">
+            <input
+              type="file"
+              id="header-import-excel"
+              className="hidden"
+              accept=".xlsx, .xls"
+              onChange={onImportChange}
+            />
+            <label htmlFor="header-import-excel">
+              <Button 
+                variant="outline" 
+                asChild
+                className="border-[#2D3748]/10 text-[#2D3748]/60 hover:bg-[#2D3748]/5 rounded-2xl h-14 px-5 gap-2 font-bold font-thai cursor-pointer transition-all"
+              >
+                <div>
+                  <FileUp size={20} className="text-[#4A7C59]" />
+                  <span className="hidden sm:inline">Import</span>
+                </div>
+              </Button>
+            </label>
+          </div>
+
+          {/* ปุ่มสลับโหมด View (Kanban/List) */}
           <div className="flex bg-white/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 shadow-sm">
             <button 
               onClick={() => onViewModeChange("kanban")} 
@@ -53,6 +100,7 @@ export const EmployeeListHeader = ({
               <ListIcon size={20} />
             </button>
           </div>
+
           <Button onClick={onAddClick} className="bg-[#4A7C59] hover:bg-[#3d664a] text-white rounded-2xl h-14 px-8 shadow-lg gap-3 font-bold font-thai transition-all hover:scale-[1.02] active:scale-95">
             <UserPlus size={22} /> เพิ่มพนักงาน
           </Button>
@@ -71,7 +119,6 @@ export const EmployeeListHeader = ({
         </div>
 
         <div className="flex items-center gap-2 p-1">
-          {/* ใช้ DepartmentCombobox แทนปุ่มรายการแบบเดิม */}
           <DepartmentCombobox 
             departments={departments}
             activeDept={activeDept}

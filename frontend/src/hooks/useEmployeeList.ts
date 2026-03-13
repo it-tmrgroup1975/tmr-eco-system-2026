@@ -1,4 +1,3 @@
-// frontend/src/hooks/useEmployeeList.ts
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useEmployeeActions } from "./useEmployeeActions";
@@ -6,9 +5,13 @@ import { employeeApi } from "../api/employeeApi";
 import type { Employee, Department, Position } from "../types/employee";
 
 export const useEmployeeList = () => {
+  // --- Pagination State ---
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(12);
+
   // --- UI State ---
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // เพิ่ม State สำหรับเปิด-ปิด Sheet ตัวกรอง
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
@@ -16,39 +19,42 @@ export const useEmployeeList = () => {
   // --- Search & Filter State ---
   const [activeDept, setActiveDept] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // ปรับปรุง filters ให้รองรับช่วงวันที่ (Date Range)
   const [filters, setFilters] = useState({
     employment_type: "",
     position: "",
-    start_date: "", // เพิ่มวันที่เริ่มต้น
-    end_date: "",   // เพิ่มวันที่สิ้นสุด
+    start_date: "",
+    end_date: "",
   });
 
   const { deleteEmployee } = useEmployeeActions();
 
-  // 1. ดึงข้อมูลแผนก
-  const { data: departments = [] } = useQuery<Department[]>({
+  // 1. ดึงข้อมูลแผนก/ตำแหน่ง
+  const { data: departments = [] } = useQuery({
     queryKey: ["departments"],
-    queryFn: () => employeeApi.getDepartments(),
+    queryFn: employeeApi.getDepartments
   });
 
-  // 2. ดึงข้อมูลตำแหน่งงาน (สำหรับใช้ใน Advanced Filter Dropdown)
-  const { data: positions = [] } = useQuery<Position[]>({
+  const { data: positions = [] } = useQuery({
     queryKey: ["positions"],
-    queryFn: () => employeeApi.getPositions(),
+    queryFn: employeeApi.getPositions
   });
 
-  // 3. ดึงข้อมูลพนักงาน (Refetch อัตโนมัติเมื่อ activeDept, searchTerm หรือ filters เปลี่ยน)
-  const { data: employees, isLoading, isError } = useQuery<Employee[]>({
-    queryKey: ["employees", activeDept, searchTerm, filters],
+  // 2. ดึงข้อมูลพนักงานแบบ Pagination
+  // รวมค่าทั้งหมดที่ส่งผลต่อข้อมูลเข้าใน queryKey
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["employees", activeDept, searchTerm, filters, page, pageSize],
     queryFn: () =>
       employeeApi.getAll({
+        page,
+        page_size: pageSize,
         department: activeDept === "all" ? undefined : activeDept,
         search: searchTerm || undefined,
-        ...filters, // ส่งค่า employment_type, position, start_date, end_date ไปยัง API
+        ...filters,
       }),
   });
+
+  // Action สำหรับการรีเฟรชข้อมูล
+  const handleRefresh = () => refetch();
 
   const handleOpenForm = (mode: "create" | "edit" | "view", emp: Employee | null = null) => {
     setFormMode(mode);
@@ -62,31 +68,42 @@ export const useEmployeeList = () => {
     }
   };
 
+  console.log("API Data:", data)
+
   return {
-    state: { 
-      isDialogOpen, 
-      isFilterOpen, // ส่งสถานะการเปิดตัวกรอง
-      selectedEmployee, 
-      formMode, 
-      viewMode, 
-      activeDept, 
-      departments, 
-      positions, // ส่งข้อมูลตำแหน่งงานออกไปใช้งาน
-      employees, 
-      isLoading, 
-      isError, 
-      searchTerm, 
-      filters 
+    state: {
+      isDialogOpen,
+      isFilterOpen,
+      selectedEmployee,
+      formMode,
+      viewMode,
+      activeDept,
+      departments,
+      positions,
+      // เจาะจงดึงข้อมูลพนักงานจาก results ที่ได้จาก Pagination ของ Backend
+      employees: data?.results || [],
+      totalCount: data?.count || 0,
+      totalPages: Math.ceil((data?.count || 0) / pageSize),
+      currentPage: page,
+      isLoading,
+      isError,
+      searchTerm,
+      filters
     },
-    actions: { 
-      setIsDialogOpen, 
-      setIsFilterOpen, // ส่งฟังก์ชันเปิด-ปิดตัวกรอง
-      setViewMode, 
-      setActiveDept, 
-      setSearchTerm, 
-      setFilters, 
-      handleOpenForm, 
-      handleDelete 
+    actions: {
+      setIsDialogOpen,
+      setIsFilterOpen,
+      setViewMode,
+      // เมื่อเปลี่ยนแผนก ให้กลับไปเริ่มหน้า 1 เสมอ
+      setActiveDept: (id: string) => { setActiveDept(id); setPage(1); },
+      // ค้นหาใหม่ให้กลับไปหน้า 1
+      setSearchTerm: (val: string) => { setSearchTerm(val); setPage(1); },
+      // กรองใหม่ให้กลับไปหน้า 1
+      setFilters: (val: any) => { setFilters(val); setPage(1); },
+      setPage,
+      handleOpenForm,
+      handleDelete,
+      handleRefresh
     }
   };
 };

@@ -12,6 +12,10 @@ from .serializers import (
     DepartmentSerializer,
     PositionSerializer
 )
+from django.http import HttpResponse
+from django.utils.timezone import now
+import pandas as pd
+from rest_framework.pagination import PageNumberPagination
 
 User = get_user_model()
 
@@ -26,6 +30,12 @@ class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
 
+# กำหนด Class สำหรับการจัดการ Pagination ที่เป็นมาตรฐานของระบบ
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 12  # จำนวนต่อหน้า (Kanban มักใช้เลขที่หารด้วย 2, 3, 4 ลงตัว)
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 # --- Employee Management ViewSet ---
 
 class EmployeeViewSet(viewsets.ModelViewSet):
@@ -36,6 +46,9 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().select_related('department', 'position').order_by('-date_joined')
     serializer_class = EmployeeListSerializer
     permission_classes = [IsAuthenticated]
+
+    # เปิดใช้งาน Pagination ใน ViewSet
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         """
@@ -86,6 +99,78 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(date_joined__date__lte=end_date)
             
         return queryset
+
+    @action(detail=False, methods=['get'], url_path='export-excel')
+    def export_excel(self, request):
+        """ส่งออกข้อมูลพนักงานตาม Filter ที่เลือก"""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # เตรียมข้อมูลสำหรับ DataFrame
+        data = []
+        for emp in queryset:
+            data.append({
+                'รหัสพนักงาน': emp.employee_id,
+                'Username': emp.username,
+                'ชื่อ': emp.first_name,
+                'นามสกุล': emp.last_name,
+                'แผนก': emp.department.name if emp.department else '-',
+                'ตำแหน่ง': emp.position.name if emp.position else '-',
+                'ประเภทการจ้าง': emp.get_employment_type_display(),
+                'บทบาท': emp.role
+            })
+
+        df = pd.DataFrame(data)
+        
+        # สร้าง Response เป็น Excel
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="employees_{now().strftime("%Y%m%d")}.xlsx"'
+        
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Employees')
+            
+        return response
+
+    @action(detail=False, methods=['post'], url_path='import-excel')
+    def import_excel(self, request):
+        """Bulk Create/Update พนักงานจากไฟล์ Excel"""
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "ไม่พบไฟล์ที่อัปโหลด"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            df = pd.read_excel(file)
+            import_count = 0
+            errors = []
+
+            for index, row in df.iterrows():
+                try:
+                    # Logic: ใช้ employee_id เป็น Key ในการ Update หรือ Create
+                    dept, _ = Department.objects.get_or_create(name=row['แผนก'])
+                    pos, _ = Position.objects.get_or_create(name=row['ตำแหน่ง'], department=dept)
+                    
+                    User.objects.update_or_create(
+                        employee_id=row['รหัสพนักงาน'],
+                        defaults={
+                            'username': row['Username'],
+                            'first_name': row['ชื่อ'],
+                            'last_name': row['นามสกุล'],
+                            'department': dept,
+                            'position': pos,
+                            'employment_type': 'full_time', # ควร Map จากข้อมูลจริง
+                            'role': row['บทบาท'].lower() if row['บทบาท'] else 'staff'
+                        }
+                    )
+                    import_count += 1
+                except Exception as e:
+                    errors.append(f"แถวที่ {index+2}: {str(e)}")
+
+            return Response({
+                "message": f"นำเข้าข้อมูลสำเร็จ {import_count} รายการ",
+                "errors": errors
+            }, status=status.HTTP_200_OK if not errors else status.HTTP_207_MULTI_STATUS)
+
+        except Exception as e:
+            return Response({"error": f"เกิดข้อผิดพลาดในการอ่านไฟล์: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 # --- Support Data ViewSets (สำหรับ Dropdown ใน Frontend) ---
 

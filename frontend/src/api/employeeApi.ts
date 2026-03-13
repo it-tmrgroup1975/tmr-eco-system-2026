@@ -1,8 +1,9 @@
-// frontend/src/api/employeeApi.ts
 import type { Employee, Department, Position } from "../types/employee";
 import axiosInstance from "./axios";
 
 export interface EmployeeFilters {
+  page?: number;        // เพิ่มรองรับเลขหน้า
+  page_size?: number;   // เพิ่มรองรับขนาดหน้า
   department?: string | number;
   position?: string | number;
   search?: string;
@@ -10,26 +11,37 @@ export interface EmployeeFilters {
   [key: string]: any;
 }
 
+/** 1. Interface ใหม่สำหรับรองรับโครงสร้างแบบ Pagination */
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 export const employeeApi = {
-  /** ดึงรายชื่อพนักงานทั้งหมดพร้อม Filtering */
-  getAll: async (params?: EmployeeFilters): Promise<Employee[]> => {
-    const response = await axiosInstance.get("/api/employees/", { params });
-    return response.data.results || response.data;
+  /** * 2. ปรับปรุง getAll:
+   * - เปลี่ยน Return Type เป็น Promise<PaginatedResponse<Employee>>
+   * - รองรับพารามิเตอร์การแบ่งหน้า (page, page_size)
+   */
+  getAll: async (params?: EmployeeFilters): Promise<PaginatedResponse<Employee>> => {
+    const response = await axiosInstance.get<PaginatedResponse<Employee>>("/api/employees/", { 
+      params: {
+        page: params?.page || 1,
+        page_size: params?.page_size || 12,
+        ...params
+      } 
+    });
+    return response.data;
   },
 
-  /**
-   * ดึงข้อมูลพนักงานรายบุคคล
-   * ปรับ ID ให้รับได้ทั้ง string และ number เพื่อป้องกัน Type Mismatch
-   */
+  /** ดึงข้อมูลพนักงานรายบุคคล */
   getById: async (id: string | number): Promise<Employee> => {
     const response = await axiosInstance.get<Employee>(`/api/employees/${id}/`);
     return response.data;
   },
 
-  /**
-   * สร้างพนักงานใหม่
-   * ใช้ FormData สำหรับรองรับการอัปโหลดไฟล์ (avatar)
-   */
+  /** สร้างพนักงานใหม่ */
   create: async (formData: FormData): Promise<Employee> => {
     const response = await axiosInstance.post<Employee>("/api/employees/", formData, {
       headers: {
@@ -39,12 +51,8 @@ export const employeeApi = {
     return response.data;
   },
 
-  /**
-   * อัปเดตข้อมูลพนักงาน
-   * ใช้ PATCH เพื่อความยืดหยุ่นในการอัปเดตเฉพาะบางฟิลด์
-   */
+  /** อัปเดตข้อมูลพนักงาน (PATCH) */
   update: async (id: string | number, formData: FormData): Promise<Employee> => {
-    // เปลี่ยนจาก .put เป็น .patch ตามมาตรฐาน DRF สำหรับการอัปเดตบางส่วน
     const response = await axiosInstance.patch<Employee>(`/api/employees/${id}/`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -53,14 +61,12 @@ export const employeeApi = {
     return response.data;
   },
 
-  /**
-   * ลบข้อมูลพนักงาน
-   * ปรับ ID ให้รับได้ทั้ง string และ number
-   */
+  /** ลบข้อมูลพนักงาน */
   delete: async (id: string | number): Promise<void> => {
     await axiosInstance.delete(`/api/employees/${id}/`);
   },
 
+  /** ข้อมูลสนับสนุนสำหรับ Dropdown */
   getDepartments: async (): Promise<Department[]> => {
     const response = await axiosInstance.get<Department[]>("/api/departments/");
     return response.data;
@@ -70,4 +76,28 @@ export const employeeApi = {
     const response = await axiosInstance.get<Position[]>("/api/positions/");
     return response.data;
   },
+};
+
+/** ฟังก์ชันสำหรับการ Export ข้อมูลพนักงาน */
+export const exportEmployees = async () => {
+  const response = await axiosInstance.get("/api/employees/export-excel/", {
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `TMR_Employees_${new Date().getTime()}.xlsx`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
+/** ฟังก์ชันสำหรับการ Import ข้อมูลพนักงาน */
+export const importEmployees = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await axiosInstance.post("/api/employees/import-excel/", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
 };
