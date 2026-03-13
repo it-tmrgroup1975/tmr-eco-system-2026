@@ -1,15 +1,18 @@
-// frontend/src/hooks/useEmployees.ts
 import { useQuery } from '@tanstack/react-query';
-import { employeeApi } from '../api/employeeApi';
+import { employeeApi, type PaginatedResponse } from '../api/employeeApi';
+import type { Employee } from '../types/employee';
 
 export const useEmployees = (filters: any) => {
-  return useQuery({
+  return useQuery<PaginatedResponse<Employee>>({
     queryKey: ['employees', filters],
     queryFn: () => employeeApi.getAll(filters),
-    // Business Logic: กรองข้อมูลเบื้องต้นหรือจัดฟอร์แมตข้อมูลก่อนส่งให้ UI
-    select: (data) => data.map(emp => ({
-      ...emp,
-      fullName: `${emp.first_name} ${emp.last_name}`
-    }))
+    // Business Logic: แก้ไขโครงสร้างข้อมูลภายใน results พร้อมคง Metadata ของ Pagination ไว้
+    select: (data) => ({
+      ...data,
+      results: data.results.map((emp: Employee) => ({
+        ...emp,
+        fullName: `${emp.first_name} ${emp.last_name}`.trim() || emp.username
+      }))
+    })
   });
 };
