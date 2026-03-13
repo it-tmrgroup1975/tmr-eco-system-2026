@@ -13,6 +13,7 @@ interface Props {
 }
 
 export const EmployeeFormDialog = ({ isOpen, onOpenChange, mode, employee, onSuccess }: Props) => (
+  
   <Dialog open={isOpen} onOpenChange={onOpenChange}>
     <DialogContent className="sm:max-w-[700px] p-0 border-none bg-transparent shadow-none">
       <div className="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-2xl border border-white/50 relative">

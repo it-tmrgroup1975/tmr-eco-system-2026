@@ -3,17 +3,19 @@ import { Search, SlidersHorizontal, UserPlus, LayoutGrid, List as ListIcon } fro
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { cn } from "../../../lib/utils";
+import { DepartmentCombobox } from "./DepartmentCombobox"; // นำเข้าคอมโพเนนต์ที่สร้างขึ้น
+import type { Department } from "../../../types/employee";
 
 interface Props {
-  departments: string[];
+  departments: Department[]; // เปลี่ยนจาก string[] เป็น Department[] เพื่อใช้ ID-Based
   activeDept: string;
   viewMode: "kanban" | "list";
-  searchTerm: string; // เพิ่มใหม่
-  onSearchChange: (value: string) => void; // เพิ่มใหม่
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
   onViewModeChange: (mode: "kanban" | "list") => void;
-  onDeptChange: (dept: string) => void;
+  onDeptChange: (id: string) => void; // เปลี่ยนชื่อพารามิเตอร์เป็น id เพื่อความชัดเจน
   onAddClick: () => void;
-  onAdvancedFilterClick?: () => void; // เพิ่มใหม่สำหรับปุ่มตัวกรองขั้นสูง
+  onAdvancedFilterClick?: () => void;
 }
 
 export const EmployeeListHeader = ({ 
@@ -67,28 +69,23 @@ export const EmployeeListHeader = ({
             className="h-16 pl-16 border-none bg-transparent text-lg focus-visible:ring-0 font-thai placeholder:text-[#2D3748]/20" 
           />
         </div>
-        <div className="flex items-center gap-2 p-1 overflow-x-auto no-scrollbar">
-          {departments.map((dept) => (
-            <button 
-              key={dept} 
-              onClick={() => onDeptChange(dept)} 
-              className={cn(
-                "px-6 h-12 rounded-2xl whitespace-nowrap font-bold text-sm transition-all font-thai", 
-                activeDept === dept 
-                  ? "bg-white text-[#4A7C59] shadow-sm ring-1 ring-[#4A7C59]/10" 
-                  : "text-[#2D3748]/40 hover:bg-white/50 hover:text-[#2D3748]/60"
-              )}
-            >
-              {dept}
-            </button>
-          ))}
+
+        <div className="flex items-center gap-2 p-1">
+          {/* ใช้ DepartmentCombobox แทนปุ่มรายการแบบเดิม */}
+          <DepartmentCombobox 
+            departments={departments}
+            activeDept={activeDept}
+            onDeptChange={onDeptChange}
+          />
+          
           <div className="w-px h-8 bg-[#2D3748]/10 mx-2 hidden xl:block" />
+          
           <Button 
             variant="ghost" 
             onClick={onAdvancedFilterClick}
             className="h-12 rounded-2xl gap-2 text-[#2D3748]/60 font-bold font-thai hover:bg-[#4A7C59]/10 hover:text-[#4A7C59]"
           >
-            <SlidersHorizontal size={18} /> ตัวกรองขั้นสูง
+            <SlidersHorizontal size={18} /> <span className="hidden md:inline">ตัวกรองขั้นสูง</span>
           </Button>
         </div>
       </div>
