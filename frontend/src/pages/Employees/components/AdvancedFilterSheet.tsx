@@ -104,7 +104,7 @@ export function AdvancedFilterSheet({ isOpen, onOpenChange, positions, filters, 
                   <SelectTrigger className="rounded-2xl h-14 bg-white/80 border-none shadow-sm focus:ring-2 focus:ring-[#4A7C59]/20 transition-all">
                     <SelectValue placeholder="แสดงทั้งหมด" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-white/40 shadow-xl font-thai">
+                  <SelectContent className="p-4 rounded-2xl border-white/40 shadow-xl font-thai">
                     <SelectItem value="full_time">พนักงานประจำ (Full-time)</SelectItem>
                     <SelectItem value="contract">สัญญาจ้าง (Contract)</SelectItem>
                     <SelectItem value="part_time">พนักงาน Part-time</SelectItem>
@@ -121,7 +121,7 @@ export function AdvancedFilterSheet({ isOpen, onOpenChange, positions, filters, 
                   <SelectTrigger className="rounded-2xl h-14 bg-white/80 border-none shadow-sm focus:ring-2 focus:ring-[#4A7C59]/20 transition-all">
                     <SelectValue placeholder="เลือกตำแหน่ง" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-white/40 shadow-xl font-thai h-[250px]">
+                  <SelectContent className="p-4 rounded-2xl border-white/40 shadow-xl font-thai h-[250px]">
                     {positions.map(p => (
                       <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
                     ))}

@@ -1,6 +1,6 @@
 // frontend/src/types/employee.ts
 export type EmploymentType = 'full_time' | 'part_time' | 'contract';
-export type UserRole = 'ADMIN' | 'MANAGER' | 'EMPLOYEE' | 'HR';
+export type UserRole = 'admin' | 'manager' | 'employee' | 'hr';
 
 export interface Employee {
   id: number;

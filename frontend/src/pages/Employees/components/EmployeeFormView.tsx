@@ -74,15 +74,16 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
           <Select 
             disabled={isViewMode} 
             onValueChange={(val) => setValue("role", val as UserRole)} 
-            value={watchRole}
+            value={watchRole ?? ""}
           >
-            <SelectTrigger className="rounded-xl border-sage-200">
+            <SelectTrigger className="rounded-xl border-sage-200 w-full">
               <SelectValue placeholder="เลือกบทบาท" />
             </SelectTrigger>
             <SelectContent className="font-thai">
               <SelectItem value="admin">Admin (ผู้ดูแลระบบ)</SelectItem>
-              <SelectItem value="supervisor">Supervisor (หัวหน้างาน)</SelectItem>
-              <SelectItem value="staff">Staff (พนักงานทั่วไป)</SelectItem>
+              <SelectItem value="manager">Manager (ผู้จัดการ)</SelectItem>
+              <SelectItem value="hr">HR (ทรัพยากรบุคคล)</SelectItem>
+              <SelectItem value="employee">Employee (พนักงานทั่วไป)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -140,7 +141,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
             }} 
             value={watchDepartment ? String(watchDepartment) : ""}
           >
-            <SelectTrigger className={cn("rounded-xl border-sage-200", errors.department && "border-destructive")}>
+            <SelectTrigger className={cn("rounded-xl border-sage-200 w-full", errors.department && "border-destructive")}>
               <SelectValue placeholder="เลือกแผนก" />
             </SelectTrigger>
             <SelectContent className="font-thai">
@@ -158,7 +159,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
             onValueChange={(val) => setValue("position", val, { shouldValidate: true })} 
             value={watchPosition ? String(watchPosition) : ""}
           >
-            <SelectTrigger className={cn("rounded-xl border-sage-200", errors.position && "border-destructive")}>
+            <SelectTrigger className={cn("rounded-xl border-sage-2000 w-full", errors.position && "border-destructive")}>
               <SelectValue placeholder={!watchDepartment ? "กรุณาเลือกแผนกก่อน" : "เลือกตำแหน่ง"} />
             </SelectTrigger>
             <SelectContent className="font-thai">
@@ -177,7 +178,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
             onValueChange={(val) => setValue("employment_type", (val as EmploymentType))} 
             value={watchEmploymentType}
           >
-            <SelectTrigger className="rounded-xl border-sage-200">
+            <SelectTrigger className="rounded-xl border-sage-2000 w-full h-[50px]">
               <SelectValue placeholder="เลือกประเภทการจ้างงาน" />
             </SelectTrigger>
             <SelectContent className="font-thai">

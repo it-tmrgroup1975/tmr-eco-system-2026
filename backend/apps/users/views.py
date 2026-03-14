@@ -16,6 +16,7 @@ from django.http import HttpResponse
 from django.utils.timezone import now
 import pandas as pd
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.exceptions import ValidationError
 
 User = get_user_model()
 
