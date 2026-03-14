@@ -163,7 +163,7 @@ TIME_ZONE = 'Asia/Bangkok'
 
 # ต้องเป็น True เพื่อให้ Django เก็บเวลาในฐานข้อมูลแบบมี Timezone 
 # แต่จะแสดงผล/คำนวณตาม TIME_ZONE ที่เราตั้งไว้ข้างบน
-USE_TZ = True
+USE_TZ = False
 
 USE_I18N = True
 
