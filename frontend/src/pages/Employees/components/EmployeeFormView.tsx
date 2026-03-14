@@ -7,7 +7,7 @@ import { Label } from "../../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Loader2, Save, Phone, Hash, ShieldCheck } from "lucide-react";
 import { cn } from "../../../lib/utils";
-import type { Employee } from "../../../types/employee";
+import type { Employee, EmploymentType, UserRole } from "../../../types/employee";
 import { AvatarSection } from "../../../components/AvatarUpload";
 
 interface EmployeeFormProps {
@@ -20,7 +20,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
   const isViewMode = mode === "view";
   const isEditMode = mode === "edit";
   
-  const { form, departments, filteredPositions, photo, isPending, onSubmit } = useEmployeeForm(employee, mode, onSuccess);
+  const { form, departments, filteredPositions, photo, isPending, onSubmit } = useEmployeeForm(employee ?? null, mode, onSuccess);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = form;
   
@@ -73,7 +73,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
           </Label>
           <Select 
             disabled={isViewMode} 
-            onValueChange={(val) => setValue("role", val)} 
+            onValueChange={(val) => setValue("role", val as UserRole)} 
             value={watchRole}
           >
             <SelectTrigger className="rounded-xl border-sage-200">
@@ -174,7 +174,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
           <Label className="text-[#2D3748]/70 font-bold">ประเภทการจ้างงาน</Label>
           <Select 
             disabled={isViewMode} 
-            onValueChange={(val) => setValue("employment_type", val)} 
+            onValueChange={(val) => setValue("employment_type", (val as EmploymentType))} 
             value={watchEmploymentType}
           >
             <SelectTrigger className="rounded-xl border-sage-200">

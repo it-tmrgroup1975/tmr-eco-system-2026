@@ -4,19 +4,19 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { employeeApi } from "../api/employeeApi";
-import type { Employee, Department, Position } from "../types/employee";
+import type { Employee, Department, Position, EmployeeFormInput } from "../types/employee";
 
-export interface EmployeeFormInput {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number: string;
-  employment_type: string;
-  department: string;
-  position: string;
-}
+// export interface EmployeeFormInput {
+//   first_name: string;
+//   last_name: string;
+//   email: string;
+//   phone_number: string;
+//   employment_type: string;
+//   department: string;
+//   position: string;
+// }
 
-export const useEmployeeForm = (employee: Employee | null, mode: string, onSuccess: () => void) => {
+export const useEmployeeForm = (employee: Employee | null | undefined, mode: string, onSuccess: () => void) => {
 
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
@@ -39,7 +39,7 @@ export const useEmployeeForm = (employee: Employee | null, mode: string, onSucce
   const form = useForm<EmployeeFormInput>({
     defaultValues: {
       employee_id: employee?.employee_id || "", 
-      role: employee?.role || "staff",         
+      role: employee?.role || "EMPLOYEE",         
       first_name: employee?.first_name || "",
       last_name: employee?.last_name || "",
       email: employee?.email || "",
