@@ -33,7 +33,7 @@ export const LogoutDialog = ({ isSidebarOpen }: LogoutDialogProps) => {
           )}
         >
           <LogOut size={20} />
-          {isSidebarOpen && <span className="ml-3">Logout</span>}
+          {isSidebarOpen && <span className="hidden ml-3">Logout</span>}
         </Button>
       </AlertDialogTrigger>
       

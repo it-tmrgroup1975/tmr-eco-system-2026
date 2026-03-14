@@ -5,8 +5,6 @@ import {
   Clock,
   FileText,
   AlertCircle,
-  User,
-  LogOut,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -16,17 +14,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 
 // 1. นำเข้า Store และ UI Components สำหรับยืนยันการ Logout
 import { useAuthStore } from '../../store/authStore';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../../components/ui/alert-dialog";
 import { LogoutDialog } from './LogoutDialog';
 
 interface NavItem {
@@ -44,7 +31,7 @@ const navItems: NavItem[] = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { user, logout } = useAuthStore(); // 2. ดึงข้อมูล User และฟังก์ชัน logout
+  const { user } = useAuthStore(); // 2. ดึงข้อมูล User และฟังก์ชัน logout
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar_expanded');
@@ -54,6 +41,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('sidebar_expanded', JSON.stringify(isSidebarOpen));
   }, [isSidebarOpen]);
+
+  console.log(user)
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] font-['IBM_Plex_Sans_Thai'] text-[#2D3748]">
@@ -124,8 +113,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}>
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-30 shadow-sm backdrop-blur-xl bg-white/80">
           <span className="font-bold text-[#2D3748]">TMR ECO SYSTEM</span>
-          <div className='flex items-center justify-between'>
-            <LogoutDialog isSidebarOpen={isSidebarOpen} />
+          <div className='justify-between'>
+            {/* <LogoutDialog isSidebarOpen={isSidebarOpen} /> */}
             <Link to="/profile">
               <Avatar className="h-8 w-8 border border-[#4A7C59]/20">
                 {/* 1. ใส่ URL รูปภาพจาก user state (สมมติว่าชื่อ field 'avatar_url') */}
