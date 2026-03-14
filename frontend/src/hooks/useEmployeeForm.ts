@@ -39,7 +39,7 @@ export const useEmployeeForm = (employee: Employee | null | undefined, mode: str
   const form = useForm<EmployeeFormInput>({
     defaultValues: {
       employee_id: employee?.employee_id || "", 
-      role: employee?.role || "EMPLOYEE",         
+      role: employee?.role || "employee",         
       first_name: employee?.first_name || "",
       last_name: employee?.last_name || "",
       email: employee?.email || "",
