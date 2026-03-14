@@ -33,6 +33,7 @@ api.interceptors.response.use(
             const detail = error.response.data.detail;
             if (detail) {
                 toast.error("ข้อผิดพลาดจากระบบ", {
+                    id: "api-error-toast",
                     description: detail,
                 });
             }

@@ -6,16 +6,6 @@ import { toast } from "sonner";
 import { employeeApi } from "../api/employeeApi";
 import type { Employee, Department, Position, EmployeeFormInput } from "../types/employee";
 
-// export interface EmployeeFormInput {
-//   first_name: string;
-//   last_name: string;
-//   email: string;
-//   phone_number: string;
-//   employment_type: string;
-//   department: string;
-//   position: string;
-// }
-
 export const useEmployeeForm = (employee: Employee | null | undefined, mode: string, onSuccess: () => void) => {
 
   const queryClient = useQueryClient();

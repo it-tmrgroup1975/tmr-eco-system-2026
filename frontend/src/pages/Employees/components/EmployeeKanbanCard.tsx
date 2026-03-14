@@ -77,6 +77,7 @@ export const EmployeeKanbanCard = ({ employee, onAction }: EmployeeKanbanCardPro
       // ดึงข้อความ "คุณไม่สามารถลบบัญชี Admin ของตัวเองได้" จาก Backend
       const errorMessage = error.response?.data?.detail || "เกิดข้อผิดพลาดในการลบข้อมูล";
       toast.error("ลบไม่สำเร็จ", {
+        id: "api-error-toast",
         description: errorMessage
       });
     },

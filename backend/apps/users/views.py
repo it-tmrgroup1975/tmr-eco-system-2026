@@ -100,14 +100,22 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(date_joined__date__lte=end_date)
             
         return queryset
+    
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
-        # ตรวจสอบว่าผู้ใช้ที่พยายามลบ คือเจ้าของ Account เองหรือไม่
+        # 1. ตรวจสอบว่าผู้ใช้ที่พยายามลบ คือเจ้าของ Account เองหรือไม่
         if instance.id == request.user.id:
             raise ValidationError({
-                "detail": "คุณไม่สามารถลบบัญชี Admin ของตัวเองได้ เพื่อป้องกันการล็อคระบบ"
+                "detail": "คุณไม่สามารถลบบัญชีของตัวเองได้ เพื่อป้องกันการล็อคระบบ"
+            })
+        
+        # 2. ตรวจสอบ Role ของบัญชีที่จะลบ ถ้าเป็น Admin ห้ามลบ
+        # หมายเหตุ: 'admin' ต้องตรงกับค่าที่ตั้งไว้ใน Choice ของ Model User
+        if instance.role == 'admin':
+            raise ValidationError({
+                "detail": "ไม่สามารถลบบัญชีผู้ดูแลระบบ (Admin) ได้ เพื่อความปลอดภัยของระบบ"
             })
             
         return super().destroy(request, *args, **kwargs)
@@ -199,6 +207,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             return Response({
                 "error": f"เกิดข้อผิดพลาดในการอ่านไฟล์หรือหัวตารางไม่ถูกต้อง: {str(e)}"
             }, status=status.HTTP_400_BAD_REQUEST)
+        
         
     @action(detail=False, methods=['get'], url_path='download-template')
     def download_template(self, request):
