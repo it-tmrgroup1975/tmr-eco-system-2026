@@ -11,7 +11,7 @@ const RecentActivity = () => {
     queryFn: async () => {
       const response = await attendanceApi.getHistory();
       // แนะนำให้ log ดูโครงสร้างข้อมูลที่แท้จริง
-      console.log('API Response:', response.data);
+      // console.log('API Response:', response.data);
       return response.data?.results || response.data || [];
     },
     // ไม่ควรใส่ initialData: [] หากต้องการให้ isLoading แสดงผลเมื่อรีเฟรช
