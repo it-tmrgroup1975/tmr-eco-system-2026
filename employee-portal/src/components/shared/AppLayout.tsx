@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../../components/ui/alert-dialog";
+import { LogoutDialog } from './LogoutDialog';
 
 interface NavItem {
   title: string;
@@ -112,39 +113,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </Link>
 
           {/* 3. ปุ่ม Logout พร้อม Confirmation Dialog */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full mt-4 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-all",
-                  !isSidebarOpen && "p-0 h-10 w-10 mx-auto block flex items-center justify-center"
-                )}
-              >
-                <LogOut size={20} />
-                {isSidebarOpen && <span className="ml-3">Logout</span>}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-[2rem] border-none font-['IBM_Plex_Sans_Thai']">
-              <AlertDialogHeader>
-                <AlertDialogTitle>ยืนยันการออกจากระบบ?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  คุณต้องการออกจากระบบ TMR Portal ใช่หรือไม่?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel
-                  variant='default' size={'default'} className="rounded-xl border-slate-200">ยกเลิก</AlertDialogCancel>
-                <AlertDialogAction
-                  variant='default' size={'default'}
-                  onClick={logout}
-                  className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
-                >
-                  ยืนยัน
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <LogoutDialog isSidebarOpen={isSidebarOpen} />
         </div>
       </aside>
 
@@ -155,13 +124,18 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       )}>
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-30 shadow-sm backdrop-blur-xl bg-white/80">
           <span className="font-bold text-[#2D3748]">TMR ECO SYSTEM</span>
-          <Link to="/profile">
-            <Avatar className="h-8 w-8 border border-[#4A7C59]/20">
-              <AvatarFallback className="bg-[#4A7C59] text-white text-[10px]">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+          <div className='flex items-center justify-between'>
+            <LogoutDialog isSidebarOpen={isSidebarOpen} />
+            <Link to="/profile">
+              <Avatar className="h-8 w-8 border border-[#4A7C59]/20">
+                {/* 1. ใส่ URL รูปภาพจาก user state (สมมติว่าชื่อ field 'avatar_url') */}
+                <AvatarImage src={user?.avatar || ""} alt={user?.first_name} />
+                <AvatarFallback className="bg-[#4A7C59] text-white text-[10px]">
+                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </div>
         </header>
 
         <div className="p-4 md:p-8 max-w-7xl mx-auto">

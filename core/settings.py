@@ -50,7 +50,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'TIME_FORMAT': '%H:%M',
-    'DATE_FORMAT': '%d-%m-%Y',
+    'DATE_FORMAT': '%Y-%m-%d',
 }
 
 # ตั้งค่าอายุของ Token และการหมุน Token (Rotation)

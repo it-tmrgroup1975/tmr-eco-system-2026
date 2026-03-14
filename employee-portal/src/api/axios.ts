@@ -9,7 +9,6 @@ const api = axios.create({
     },
 });
 
-// ดักจับ Request เพื่อใส่ Token ไปใน Header ทุกครั้งอัตโนมัติ
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
@@ -18,9 +17,7 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
@@ -28,43 +25,40 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // กรณีเป็น ValidationError (400) จาก Backend
-        if (error.response?.status === 400) {
-            const detail = error.response.data.detail;
-            if (detail) {
-                toast.error("ข้อผิดพลาดจากระบบ", {
-                    id: "api-error-toast",
-                    description: detail,
-                });
-            }
-        }
-
-        // ถ้า Error เป็น 401 (Unauthorized) และยังไม่ได้ลองขอ token ใหม่
-        if (error.response.status === 401 && !originalRequest._retry) {
+        // 1. ปรับการเช็ค 401 ให้รัดกุมขึ้น (ป้องกัน Infinity Loop)
+        if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             const refreshToken = localStorage.getItem('refresh_token');
 
             if (refreshToken) {
                 try {
-                    // ไปที่ endpoint ของ SimpleJWT เพื่อขอ access token ใหม่
-                    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/token/refresh/`, {
+                    // ตรวจสอบ URL ให้แน่ใจว่าไม่ซ้อน /api/api
+                    const refreshUrl = '/token/refresh/'; // ใช้ Path สั้นถ้า baseURL มี /api แล้ว
+                    const response = await axios.post(`${import.meta.env.VITE_API_URL}${refreshUrl}`, {
                         refresh: refreshToken,
                     });
 
                     const { access } = response.data;
                     localStorage.setItem('access_token', access);
 
-                    // ใส่ token ใหม่และยิง request เดิมซ้ำอีกครั้ง
+                    // อัปเดต Header และยิง Request เดิม
                     originalRequest.headers.Authorization = `Bearer ${access}`;
                     return api(originalRequest);
                 } catch (refreshError) {
-                    // ถ้า refresh token ก็หมดอายุด้วย ให้เตะไปหน้า login
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
+                    // ล้างค่าและเด้งไป Login เฉพาะเมื่อ Refresh ไม่สำเร็จจริงๆ
+                    localStorage.clear(); // ล้างทั้งหมดรวมถึง auth-storage ของ Zustand
                     window.location.href = '/login';
+                    return Promise.reject(refreshError);
                 }
             }
         }
+
+        // 2. ปรับการแจ้งเตือน Error 400 ให้เจาะจง
+        if (error.response?.status === 400) {
+            const detail = error.response.data.detail || "ข้อมูลไม่ถูกต้อง";
+            toast.error(detail, { id: "api-error" });
+        }
+
         return Promise.reject(error);
     }
 );

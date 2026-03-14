@@ -1,4 +1,3 @@
-import { CheckCircle2 } from 'lucide-react';
 import AttendanceStatus from './components/AttendanceStatus';
 import QuickActions from './components/QuickActions';
 import RecentActivity from './components/RecentActivity';

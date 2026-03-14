@@ -58,7 +58,7 @@ export default function EmployeeForm({ employee, mode, onSuccess }: EmployeeForm
             <Hash size={14} /> รหัสพนักงาน
           </Label>
           <Input 
-            disabled={isViewMode || isEditMode} 
+            // disabled={isViewMode || isEditMode} 
             {...register("employee_id", { required: "กรุณากรอกรหัสพนักงาน" })} 
             placeholder="เช่น EMP001"
             className={cn("rounded-xl border-sage-200", errors.employee_id && "border-destructive bg-destructive/5")} 

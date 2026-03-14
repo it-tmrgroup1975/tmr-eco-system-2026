@@ -2,20 +2,34 @@ import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Clock } from 'lucide-react';
 import { attendanceApi } from '../../../api/attendanceApi';
 import { cn } from '../../../lib/utils';
+import { parseISO, isValid, format } from 'date-fns';
+import { th } from 'date-fns/locale';
 
 const RecentActivity = () => {
-  const { data: history, isLoading } = useQuery({
+  const { data: history, isLoading, isError, error } = useQuery({
     queryKey: ['attendance-history'],
     queryFn: async () => {
       const response = await attendanceApi.getHistory();
-      // ตรวจสอบว่า API ส่งข้อมูลมาที่ response.data ตรงๆ หรืออยู่ใน property อื่น เช่น response.data.results
-      // ใช้ || [] เพื่อป้องกัน Error หากข้อมูลเป็น null หรือ undefined
+      // แนะนำให้ log ดูโครงสร้างข้อมูลที่แท้จริง
+      console.log('API Response:', response.data);
       return response.data?.results || response.data || [];
     },
-    initialData: [], // กำหนดค่าเริ่มต้นเป็น Array ว่างเพื่อป้องกัน .length พังในครั้งแรก
+    // ไม่ควรใส่ initialData: [] หากต้องการให้ isLoading แสดงผลเมื่อรีเฟรช
+    retry: 1,
+    staleTime: 5000, // ให้ข้อมูลสดใหม่เสมอ
   });
 
-  if (isLoading) return <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-300" /></div>;
+  if (isLoading) return (
+    <div className="flex justify-center p-8">
+      <Loader2 className="animate-spin text-[#4A7C59]" />
+    </div>
+  );
+
+  if (isError) return (
+    <div className="text-center text-red-400 text-xs py-4">
+      ไม่สามารถดึงข้อมูลได้ (Session อาจหมดอายุ)
+    </div>
+  );
 
   return (
     <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -33,11 +47,17 @@ const RecentActivity = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#2D3748]">
-                    {new Date(record.date).toLocaleDateString('th-TH', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
+                    {(() => {
+                      // 1. แปลง string เป็น Date Object อย่างปลอดภัย
+                      const date = record.date ? parseISO(record.date) : null;
+
+                      // 2. ตรวจสอบว่าวันที่ใช้งานได้จริงหรือไม่ (ป้องกัน RangeError)
+                      if (date && isValid(date)) {
+                        return format(date, 'd MMMM yyyy', { locale: th });
+                      }
+
+                      return "วันที่ไม่ถูกต้อง"; // Fallback กรณีข้อมูลเสีย
+                    })()}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <Clock size={12} className="text-gray-400" />
