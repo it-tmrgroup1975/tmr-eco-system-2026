@@ -29,6 +29,9 @@ ALLOWED_HOSTS = [host.strip() for host in hosts_raw.split(',') if host.strip()]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://tmr-hr.test",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
 ]
 
 MEDIA_URL = '/media/'
