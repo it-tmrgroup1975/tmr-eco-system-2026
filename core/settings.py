@@ -78,6 +78,7 @@ INSTALLED_APPS = [
 
     'users',  
     'attendance',
+    'payroll',
 
     # 3rd Party Packages
     'rest_framework',
