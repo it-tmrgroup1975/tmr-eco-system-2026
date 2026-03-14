@@ -10,9 +10,32 @@ import { downloadImportTemplate, exportEmployees, importEmployees } from "../../
 import { Button } from "../../components/ui/button"; // นำเข้า Button จาก ShadCN
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"; // นำเข้าไอคอนสำหรับ Pagination
 import { cn } from "../../lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../api/axios";
 
 export default function EmployeeListPage() {
   const { state, actions } = useEmployeeList();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await api.delete(`/api/employees/${id}/`);
+    },
+    onSuccess: () => {
+      toast.success("ลบข้อมูลพนักงานสำเร็จ");
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+    },
+    onError: (error: any) => {
+      // ดักจับ ValidationError (400 Bad Request) จาก Django
+      // ดึงฟิลด์ 'detail' ที่เราเขียนดักไว้ใน Backend
+      const errorMessage = error.response?.data?.detail || "เกิดข้อผิดพลาดในการลบข้อมูล";
+
+      // แสดงผลด้วย Toast ของ ShadCN/UI
+      toast.error("ไม่สามารถทำรายการได้", {
+        description: errorMessage,
+      });
+    }
+  });
 
   // --- Logic สำหรับการ Export ข้อมูลพนักงาน ---
   const handleExport = async () => {

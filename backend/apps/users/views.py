@@ -100,6 +100,17 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             
         return queryset
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # ตรวจสอบว่าผู้ใช้ที่พยายามลบ คือเจ้าของ Account เองหรือไม่
+        if instance.id == request.user.id:
+            raise ValidationError({
+                "detail": "คุณไม่สามารถลบบัญชี Admin ของตัวเองได้ เพื่อป้องกันการล็อคระบบ"
+            })
+            
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'], url_path='export-excel')
     def export_excel(self, request):
         """ส่งออกข้อมูลพนักงานตาม Filter ที่เลือก"""

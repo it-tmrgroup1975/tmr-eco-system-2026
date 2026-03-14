@@ -1,5 +1,6 @@
 // frontend/src/api/axios.ts
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -27,6 +28,16 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // กรณีเป็น ValidationError (400) จาก Backend
+        if (error.response?.status === 400) {
+            const detail = error.response.data.detail;
+            if (detail) {
+                toast.error("ข้อผิดพลาดจากระบบ", {
+                    description: detail,
+                });
+            }
+        }
+
         // ถ้า Error เป็น 401 (Unauthorized) และยังไม่ได้ลองขอ token ใหม่
         if (error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -41,7 +52,7 @@ api.interceptors.response.use(
 
                     const { access } = response.data;
                     localStorage.setItem('access_token', access);
-                    
+
                     // ใส่ token ใหม่และยิง request เดิมซ้ำอีกครั้ง
                     originalRequest.headers.Authorization = `Bearer ${access}`;
                     return api(originalRequest);

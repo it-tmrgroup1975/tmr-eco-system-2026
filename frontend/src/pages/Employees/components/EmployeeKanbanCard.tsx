@@ -21,6 +21,9 @@ import {
   AlertDialogTitle,
 } from "../../../components/ui/alert-dialog";
 import { useEmployeeActions } from "../../../hooks/useEmployeeActions";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../../api/axios";
+import { toast } from "sonner";
 
 interface EmployeeKanbanCardProps {
   employee: Employee;
@@ -53,9 +56,31 @@ export const EmployeeKanbanCard = ({ employee, onAction }: EmployeeKanbanCardPro
 
   // ฟังก์ชันยืนยันการลบผ่าน useEmployeeActions
   const confirmDelete = () => {
-    deleteEmployee(employee.id);
+    // สั่งรัน Logic การลบพร้อมรับมือ Error และ Success
+    deleteMutation.mutate(employee.id);
     setShowDeleteAlert(false);
   };
+
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      // เรียกใช้งาน API delete ผ่าน axios ที่เราตั้งค่าไว้
+      return await api.delete(`/api/employees/${id}/`);
+    },
+    onSuccess: () => {
+      toast.success("ลบข้อมูลพนักงานเรียบร้อยแล้ว");
+      // รีเฟรชข้อมูลในหน้า List
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+    },
+    onError: (error: any) => {
+      // ดึงข้อความ "คุณไม่สามารถลบบัญชี Admin ของตัวเองได้" จาก Backend
+      const errorMessage = error.response?.data?.detail || "เกิดข้อผิดพลาดในการลบข้อมูล";
+      toast.error("ลบไม่สำเร็จ", {
+        description: errorMessage
+      });
+    },
+  });
 
   return (
     <>
