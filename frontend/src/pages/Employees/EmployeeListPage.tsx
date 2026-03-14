@@ -31,9 +31,7 @@ export default function EmployeeListPage() {
   // --- Logic สำหรับการ Import ข้อมูลพนักงาน ---
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
-    console.log("Input Changed!"); // เช็คว่า Event ทำงานไหม
     const file = e.target.files?.[0];
-    console.log("Selected File:", file); // เช็คว่าได้ไฟล์มาไหม
 
     if (!file) return;
 

@@ -33,10 +33,11 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'employee_id', 'first_name', 'last_name', 'full_name',
-            'username', 'email', 'phone_number', 'department', 'department_name',
+            'username', 'email', 'role', 'phone_number', 'department', 'department_name',
             'position', 'position_name', 'employment_type', 'avatar', 'avatar_url'
         ]
         extra_kwargs = {
+            'id': {'read_only': True},
             'username': {'required': False},
             'department': {'write_only': True}, # รับค่าตอนสร้าง แต่ไม่ส่งออกตอน Get
             'position': {'write_only': True},

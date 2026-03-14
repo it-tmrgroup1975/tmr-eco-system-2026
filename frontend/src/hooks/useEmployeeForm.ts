@@ -16,11 +16,8 @@ export interface EmployeeFormInput {
   position: string;
 }
 
-export const useEmployeeForm = (
-  employee: Employee | null | undefined, 
-  mode: "create" | "edit" | "view", 
-  onSuccess: () => void
-) => {
+export const useEmployeeForm = (employee: Employee | null, mode: string, onSuccess: () => void) => {
+
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
   const fileInputRef = useRef<HTMLInputElement>(null!);
@@ -41,13 +38,15 @@ export const useEmployeeForm = (
 
   const form = useForm<EmployeeFormInput>({
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone_number: "",
-      employment_type: "full_time",
-      department: "",
-      position: "",
+      employee_id: employee?.employee_id || "", 
+      role: employee?.role || "staff",         
+      first_name: employee?.first_name || "",
+      last_name: employee?.last_name || "",
+      email: employee?.email || "",
+      phone_number: employee?.phone_number || "",
+      employment_type: employee?.employment_type || "full_time",
+      department: employee?.department || "",
+      position: employee?.position || "",
     },
   });
 
