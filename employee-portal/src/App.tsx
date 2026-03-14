@@ -3,6 +3,8 @@ import LoginPage from './pages/Auth/LoginPage';
 import Dashboard from './pages/Dashboard/Index';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import AppLayout from './components/shared/AppLayout';
+import { MyPayslipDetailPage } from './pages/Payslip/MyPayslipDetail';
+import { MyPayslipList } from './pages/Payslip/MyPayslipList';
 
 function App() {
   return (
@@ -11,15 +13,17 @@ function App() {
         {/* Public Route */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Private Routes (ต้อง Login ก่อน) */}
+        {/* Private Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout children={<Dashboard />} />}>
+          {/* แก้ไข: ใช้ AppLayout เป็น Wrapper และไม่ต้องส่ง children เข้าไปใน Props */}
+          <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
-            {/* เพิ่มหน้าอื่นๆ ของพนักงานที่นี่ เช่น /attendance, /payslips */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/payslips" element={<MyPayslipList />} />
+            <Route path="/dashboard/payslips/:id" element={<MyPayslipDetailPage />} />
           </Route>
         </Route>
 
-        {/* Fallback: ถ้าไปมั่วๆ ให้กลับหน้าแรก */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,7 @@
-import { FileText, AlertTriangle, UserCircle } from 'lucide-react';
+import { AlertTriangle, UserCircle, ClipboardCheck } from 'lucide-react';
 
 const actions = [
-  { label: 'ดูสลิปเงินเดือน', icon: FileText, color: 'bg-blue-50 text-blue-600' },
+  { label: 'ลางานออนไลน์', icon: ClipboardCheck, color: 'bg-blue-50 text-blue-600' },
   { label: 'แจ้งเหตุการณ์', icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
   { label: 'ข้อมูลส่วนตัว', icon: UserCircle, color: 'bg-purple-50 text-purple-600' },
 ];

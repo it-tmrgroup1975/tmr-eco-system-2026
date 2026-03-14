@@ -1,4 +1,5 @@
 import AttendanceStatus from './components/AttendanceStatus';
+import { PayslipWidget } from './components/PayslipWidget';
 import QuickActions from './components/QuickActions';
 import RecentActivity from './components/RecentActivity';
 
@@ -21,6 +22,8 @@ const Dashboard = () => {
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">เมนูแนะนำ</h3>
         <QuickActions />
       </section>
+
+      <PayslipWidget />
 
       {/* ประวัติย่อ (Recent Activity) */}
       <RecentActivity />

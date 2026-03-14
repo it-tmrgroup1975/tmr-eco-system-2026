@@ -8,6 +8,7 @@ interface User {
   last_name: string;
   is_staff: boolean;
   avatar: string;
+  employee_id: string;
 }
 
 interface AuthState {

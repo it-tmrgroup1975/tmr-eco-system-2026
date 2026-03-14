@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, Outlet } from 'react-router-dom'; // 1. เพิ่ม Outlet
 import {
   LayoutDashboard,
   Clock,
@@ -12,7 +12,6 @@ import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 
-// 1. นำเข้า Store และ UI Components สำหรับยืนยันการ Logout
 import { useAuthStore } from '../../store/authStore';
 import { LogoutDialog } from './LogoutDialog';
 
@@ -29,9 +28,9 @@ const navItems: NavItem[] = [
   { title: 'Report Incident', href: '/report', icon: AlertCircle },
 ];
 
-const AppLayout = ({ children }: { children: React.ReactNode }) => {
+const AppLayout = () => { // 2. ลบ { children } props ออก
   const location = useLocation();
-  const { user } = useAuthStore(); // 2. ดึงข้อมูล User และฟังก์ชัน logout
+  const { user } = useAuthStore();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar_expanded');
@@ -41,8 +40,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('sidebar_expanded', JSON.stringify(isSidebarOpen));
   }, [isSidebarOpen]);
-
-  console.log(user)
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] font-['IBM_Plex_Sans_Thai'] text-[#2D3748]">
@@ -67,7 +64,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
         <nav className="flex-1 space-y-2 p-3 mt-4">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            // เช็ค Active State ให้ครอบคลุม Sub-routes (เช่น /dashboard/payslips/1)
+            const isActive = item.href === '/' 
+              ? location.pathname === '/' 
+              : location.pathname.startsWith(item.href);
+
             return (
               <Link key={item.href} to={item.href}>
                 <div className={cn(
@@ -85,23 +86,20 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         <div className="p-4 border-t border-white/10">
-          {/* ส่วนข้อมูล Profile */}
           <Link to="/profile" className={cn("flex items-center hover:bg-white/5 p-2 rounded-xl transition-colors", isSidebarOpen ? "gap-3" : "justify-center")}>
             <Avatar className="h-10 w-10 border-2 border-[#4A7C59]">
-              <AvatarImage src="" />
-              <AvatarFallback className="bg-[#4A7C59] text-white">
+              <AvatarImage src={user?.avatar || ""} />
+              <AvatarFallback className="bg-[#4A7C59] text-white text-xs">
                 {user?.first_name?.[0]}{user?.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
             {isSidebarOpen && (
               <div className="flex flex-col overflow-hidden">
                 <p className="text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
-                <p className="text-xs text-gray-400 truncate">ID: {user?.id || '67001'}</p>
+                <p className="text-[10px] text-gray-400 truncate">ID: {user?.employee_id || 'N/A'}</p>
               </div>
             )}
           </Link>
-
-          {/* 3. ปุ่ม Logout พร้อม Confirmation Dialog */}
           <LogoutDialog isSidebarOpen={isSidebarOpen} />
         </div>
       </aside>
@@ -111,31 +109,31 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         "transition-all duration-500 min-h-screen pb-20 md:pb-0",
         isSidebarOpen ? "md:ml-72" : "md:ml-20"
       )}>
-        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-30 shadow-sm backdrop-blur-xl bg-white/80">
+        <header className="md:hidden flex items-center justify-between p-4 bg-white/80 border-b sticky top-0 z-30 backdrop-blur-xl shadow-sm">
           <span className="font-bold text-[#2D3748]">TMR ECO SYSTEM</span>
-          <div className='justify-between'>
-            {/* <LogoutDialog isSidebarOpen={isSidebarOpen} /> */}
-            <Link to="/profile">
-              <Avatar className="h-8 w-8 border border-[#4A7C59]/20">
-                {/* 1. ใส่ URL รูปภาพจาก user state (สมมติว่าชื่อ field 'avatar_url') */}
-                <AvatarImage src={user?.avatar || ""} alt={user?.first_name} />
-                <AvatarFallback className="bg-[#4A7C59] text-white text-[10px]">
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-          </div>
+          <Link to="/profile">
+            <Avatar className="h-8 w-8 border border-[#4A7C59]/20">
+              <AvatarImage src={user?.avatar || ""} alt={user?.first_name} />
+              <AvatarFallback className="bg-[#4A7C59] text-white text-[10px]">
+                {user?.first_name?.[0]}{user?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </header>
 
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
-          {children}
+          {/* 3. ใช้ Outlet แทน children เพื่อแสดงผล Nested Routes */}
+          <Outlet />
         </div>
       </main>
 
       {/* --- Mobile Bottom Navigation --- */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-16 px-2 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = item.href === '/' 
+            ? location.pathname === '/' 
+            : location.pathname.startsWith(item.href);
+
           return (
             <Link
               key={item.href}

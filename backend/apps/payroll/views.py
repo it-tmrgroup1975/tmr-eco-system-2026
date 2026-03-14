@@ -12,6 +12,23 @@ from django.http import HttpResponse
 class AdminPayslipViewSet(viewsets.ModelViewSet):
     queryset = Payslip.objects.all()
     serializer_class = PayslipSerializer  # แก้ไข: เพิ่มบรรทัดนี้เพื่อแก้ AssertionError
+
+    def get_queryset(self):
+        """
+        ถ้าเป็น Admin ให้เห็นทั้งหมด 
+        ถ้าเป็นพนักงานทั่วไป ให้เห็นเฉพาะของตัวเอง
+        """
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return Payslip.objects.all()
+        return Payslip.objects.filter(employee=user)
+
+    @action(detail=False, methods=['get'], url_path='my-payslips')
+    def my_payslips(self, request):
+        """ส่งคืนสลิปเฉพาะของพนักงานที่ล็อกอินอยู่"""
+        queryset = self.get_queryset().filter(employee=request.user).order_by('-period_year', '-period_month')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['post'], url_path='bulk-send')
     def bulk_send(self, request):
