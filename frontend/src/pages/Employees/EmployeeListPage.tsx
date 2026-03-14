@@ -6,7 +6,7 @@ import { EmployeeFormDialog } from "./components/EmployeeFormDialog";
 import { EmployeeSkeleton } from "./components/EmployeeSkeleton";
 import { AdvancedFilterSheet } from "./components/AdvancedFilterSheet";
 import { toast } from "sonner";
-import { exportEmployees, importEmployees } from "../../api/employeeApi";
+import { downloadImportTemplate, exportEmployees, importEmployees } from "../../api/employeeApi";
 import { Button } from "../../components/ui/button"; // นำเข้า Button จาก ShadCN
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"; // นำเข้าไอคอนสำหรับ Pagination
 import { cn } from "../../lib/utils";
@@ -30,7 +30,11 @@ export default function EmployeeListPage() {
 
   // --- Logic สำหรับการ Import ข้อมูลพนักงาน ---
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    console.log("Input Changed!"); // เช็คว่า Event ทำงานไหม
     const file = e.target.files?.[0];
+    console.log("Selected File:", file); // เช็คว่าได้ไฟล์มาไหม
+
     if (!file) return;
 
     const toastId = toast.loading("กำลังนำเข้าข้อมูลพนักงาน...");
@@ -51,6 +55,18 @@ export default function EmployeeListPage() {
     }
   };
 
+  // --- Logic สำหรับการดาวน์โหลด Template ---
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadImportTemplate();
+      toast.success("ดาวน์โหลดเทมเพลตสำเร็จ", {
+        description: "โปรดกรอกข้อมูลตามรูปแบบที่กำหนดในไฟล์",
+      });
+    } catch (error) {
+      toast.error("ไม่สามารถดาวน์โหลดเทมเพลตได้");
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
       {/* 1. ส่วนหัวและแถบค้นหา */}
@@ -66,6 +82,7 @@ export default function EmployeeListPage() {
         onAdvancedFilterClick={() => actions.setIsFilterOpen(true)}
         onExportClick={handleExport}
         onImportChange={handleImport}
+        onDownloadTemplateClick={handleDownloadTemplate}
       />
 
       {/* 2. ส่วนแสดงรายชื่อพนักงาน */}

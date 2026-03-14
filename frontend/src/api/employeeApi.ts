@@ -101,3 +101,19 @@ export const importEmployees = async (file: File) => {
   });
   return response.data;
 };
+
+export const downloadImportTemplate = async () => {
+  const response = await axiosInstance.get("/api/employees/download-template/", {
+    responseType: 'blob', // สำคัญ: ต้องระบุเป็น blob เพื่อรับไฟล์
+  });
+  
+  // สร้าง Link ลับในหน่วยความจำและสั่งคลิกเพื่อดาวน์โหลด
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'employee_import_template.xlsx');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url); // ล้างหน่วยความจำ
+};

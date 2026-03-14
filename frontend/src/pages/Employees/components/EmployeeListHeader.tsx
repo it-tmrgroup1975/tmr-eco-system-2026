@@ -4,8 +4,9 @@ import {
   UserPlus, 
   LayoutGrid, 
   List as ListIcon,
-  FileDown, // ไอคอนสำหรับ Export
-  FileUp    // ไอคอนสำหรับ Import
+  FileDown, 
+  FileUp,
+  Download // นำเข้าไอคอน Download เพิ่มเติม
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -23,9 +24,10 @@ interface Props {
   onDeptChange: (id: string) => void;
   onAddClick: () => void;
   onAdvancedFilterClick?: () => void;
-  // เพิ่ม Props ใหม่สำหรับการจัดการไฟล์
   onExportClick: () => void;
   onImportChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  // --- เพิ่ม Prop ใหม่สำหรับดาวน์โหลด Template ---
+  onDownloadTemplateClick: () => void; 
 }
 
 export const EmployeeListHeader = ({ 
@@ -38,8 +40,9 @@ export const EmployeeListHeader = ({
   onDeptChange, 
   onAddClick,
   onAdvancedFilterClick,
-  onExportClick,   // ดึงมาใช้งาน
-  onImportChange   // ดึงมาใช้งาน
+  onExportClick,
+  onImportChange,
+  onDownloadTemplateClick // รับมาใช้งาน
 }: Props) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -52,6 +55,16 @@ export const EmployeeListHeader = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* --- ปุ่มดาวน์โหลด Template (ใหม่) --- */}
+          <Button 
+            variant="outline" 
+            onClick={onDownloadTemplateClick}
+            className="border-[#4A7C59]/20 text-[#4A7C59] hover:bg-[#4A7C59]/5 rounded-2xl h-14 px-5 gap-2 font-bold font-thai transition-all"
+          >
+            <Download size={20} />
+            <span className="hidden lg:inline">Template</span>
+          </Button>
+
           {/* --- ปุ่ม Export --- */}
           <Button 
             variant="outline" 

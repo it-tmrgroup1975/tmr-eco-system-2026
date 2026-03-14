@@ -68,7 +68,7 @@ export const useEmployeeList = () => {
     }
   };
 
-  console.log("API Data:", data)
+  // console.log("API Data:", data)
 
   return {
     state: {

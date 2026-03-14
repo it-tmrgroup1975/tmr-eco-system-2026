@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_cleanup.apps.CleanupConfig',
+    'django_extensions',
 
     'users',  # ใส่แค่ 'users' ได้เลยเพราะเราทำ sys.path.insert ไว้แล้ว
 
