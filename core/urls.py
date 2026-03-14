@@ -2,7 +2,10 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -13,18 +16,21 @@ from users.views import (
     DepartmentViewSet, 
     PositionViewSet
 )
+from attendance.views import AttendanceViewSet
 
 # 1. การลงทะเบียน Router (ถูกต้องแล้ว)
 router = DefaultRouter()
 router.register(r'employees', EmployeeViewSet, basename='employee')
 router.register(r'departments', DepartmentViewSet, basename='department')
 router.register(r'positions', PositionViewSet, basename='position')
+router.register(r'attendance', AttendanceViewSet, basename='attendance')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
     # 2. Authentication Endpoints
     path('api/login/', LoginView.as_view(), name='token_obtain_pair'),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # 3. API Endpoints (รวมถึง @action ต่างๆ เช่น /download-template/)

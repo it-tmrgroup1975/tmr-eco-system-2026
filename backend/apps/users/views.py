@@ -17,6 +17,7 @@ from django.utils.timezone import now
 import pandas as pd
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import ValidationError
+from .serializers import EmployeeListSerializer # ตรวจสอบว่ามีฟิลด์ phone, address แล้ว
 
 User = get_user_model()
 
@@ -29,6 +30,41 @@ class LoginView(TokenObtainPairView):
     """
     serializer_class = CustomTokenObtainPairSerializer
     permission_classes = [AllowAny]
+
+
+class UserProfileViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = EmployeeListSerializer
+
+    @action(detail=False, methods=['get', 'patch'])
+    def me(self, request):
+        user = request.user
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+        
+        # สำหรับ PATCH: จำกัดฟิลด์ที่อนุญาตให้พนักงานแก้เอง
+        allowed_fields = ['first_name', 'last_name', 'phone', 'address']
+        data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = self.get_serializer(user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def change_password(self, request):
+        user = request.user
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+        
+        if not user.check_password(old_password):
+            return Response({"error": "รหัสผ่านเดิมไม่ถูกต้อง"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.set_password(new_password)
+        user.save()
+        return Response({"message": "เปลี่ยนรหัสผ่านสำเร็จ"}, status=status.HTTP_200_OK)
 
 
 # กำหนด Class สำหรับการจัดการ Pagination ที่เป็นมาตรฐานของระบบ

@@ -49,6 +49,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'TIME_FORMAT': '%H:%M',
+    'DATE_FORMAT': '%d-%m-%Y',
 }
 
 # ตั้งค่าอายุของ Token และการหมุน Token (Rotation)
@@ -74,7 +76,8 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     'django_extensions',
 
-    'users',  # ใส่แค่ 'users' ได้เลยเพราะเราทำ sys.path.insert ไว้แล้ว
+    'users',  
+    'attendance',
 
     # 3rd Party Packages
     'rest_framework',
@@ -155,12 +158,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# แก้ไขจาก UTC เป็น Asia/Bangkok
+TIME_ZONE = 'Asia/Bangkok'
 
-USE_I18N = True
-
+# ต้องเป็น True เพื่อให้ Django เก็บเวลาในฐานข้อมูลแบบมี Timezone 
+# แต่จะแสดงผล/คำนวณตาม TIME_ZONE ที่เราตั้งไว้ข้างบน
 USE_TZ = True
 
+USE_I18N = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
