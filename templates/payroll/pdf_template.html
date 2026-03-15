@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* สำหรับภาษาไทยใน WeasyPrint บน Windows ให้ใช้ชื่อฟอนต์ที่มีในเครื่อง */
+        body {
+            font-family: 'Sarabun', 'TH Sarabun New', 'Arial', sans-serif;
+            font-size: 14px;
+            color: #2D3748; /* Charcoal Grey */
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #4A7C59; /* Sage Green */
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #4A7C59;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #E2E8F0;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #F8FAFC;
+        }
+        .text-right { text-align: right; }
+        .total-row {
+            background-color: #F1F5F9;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>ใบแจ้งเงินเดือน (Payslip)</h2>
+        <p>ประจำเดือน {{ payslip.period_month }}/{{ payslip.period_year }} - งวดที่ {{ payslip.cycle }}</p>
+    </div>
+
+    <div class="content">
+        <p><strong>ชื่อพนักงาน:</strong> {{ payslip.employee.get_full_name }}</p>
+        <p><strong>แผนก:</strong> {{ payslip.employee.department.name|default:"ไม่ระบุ" }}</p>
+
+        <div class="section-title">รายรับ (Earnings)</div>
+        <table>
+            <tr>
+                <th>รายการ</th>
+                <th class="text-right">จำนวนเงิน</th>
+            </tr>
+            <tr>
+                <td>เงินเดือนพื้นฐาน (Attendance: {{ payslip.attendance_hours }} ชม.)</td>
+                <td class="text-right">{{ payslip.salary_amount|floatformat:2 }}</td>
+            </tr>
+        </table>
+
+        <div class="section-title">รายจ่าย (Deductions)</div>
+        <table>
+            <tr>
+                <th>รายการ</th>
+                <th class="text-right">จำนวนเงิน</th>
+            </tr>
+            <tr>
+                <td>ประกันสังคม (SSO)</td>
+                <td class="text-right">- {{ payslip.social_security|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>ภาษีหัก ณ ที่จ่าย</td>
+                <td class="text-right">- {{ payslip.tax_deduction|floatformat:2 }}</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr class="total-row">
+                <td>รายรับสุทธิ (Net Salary)</td>
+                <td class="text-right">{{ payslip.net_salary|floatformat:2 }} บาท</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

@@ -6,6 +6,15 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from .models import Payslip
 
+# แก้ไขส่วนการ Import WeasyPrint ให้เป็น Safe Import
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError):
+    # กรณีหา library ไม่เจอ (Error 0x7e) จะไม่ทำให้ระบบพัง
+    WEASYPRINT_AVAILABLE = False
+    HTML = None
+
 class PayrollService:
     """
     Service Layer สำหรับจัดการ Business Logic ของระบบเงินเดือน
@@ -73,13 +82,38 @@ class PayrollService:
         )
         return payslip
 
+class PayslipPDFService:
+    """Service สำหรับการสร้างไฟล์ PDF จาก Payslip Model"""
+
+    @staticmethod
+    def generate_pdf_bytes(payslip):
+        """แปลง Payslip เป็น PDF Bytes เพื่อนำไปแนบอีเมลหรือดาวน์โหลด"""
+        if not HTML:
+            raise ImportError("โปรดติดตั้ง weasyprint เพื่อใช้งานการสร้าง PDF")
+
+        cycle_text = "ต้นเดือน (งวดที่ 1)" if payslip.cycle == '1H' else "สิ้นเดือน (งวดที่ 2)"
+        
+        context = {
+            'payslip': payslip,
+            'employee': payslip.employee,
+            'cycle_text': cycle_text,
+            'net_salary': payslip.net_salary,
+            'company_name': getattr(settings, 'COMPANY_NAME', 'TMR Group'),
+        }
+
+        # ใช้ Template แยกสำหรับ PDF (เพื่อให้จัด Layout ได้แม่นยำกว่า HTML Email)
+        html_string = render_to_string('payroll/pdf_template.html', context)
+        
+        # สร้าง PDF เป็น Binary Data
+        pdf_file = HTML(string=html_string).write_pdf()
+        return pdf_file
+
 class PayslipEmailService:
-    """Service สำหรับจัดการส่ง Email แจ้งเงินเดือนแบบระบุงวด"""
+    """Service สำหรับจัดการส่ง Email แจ้งเงินเดือนพร้อมแนบไฟล์ PDF"""
 
     @staticmethod
     def send_individual_email(payslip):
-        """ส่งเมลรายบุคคล และอัปเดตสถานะการส่งในฐานข้อมูล"""
-        # กำหนดคำเรียกงวดการจ่ายให้ชัดเจนในอีเมล
+        """ส่งเมลรายบุคคลพร้อมแนบไฟล์ PDF และอัปเดตสถานะการส่ง"""
         cycle_text = "ต้นเดือน (งวดที่ 1)" if payslip.cycle == '1H' else "สิ้นเดือน (งวดที่ 2)"
         subject = f"ใบแจ้งเงินเดือน {cycle_text} รอบ {payslip.period_month}/{payslip.period_year}"
         
@@ -92,6 +126,7 @@ class PayslipEmailService:
         }
         
         try:
+            # 1. เตรียมเนื้อหาอีเมล (HTML Body)
             html_body = render_to_string('emails/payslip_template.html', context)
             
             email = EmailMultiAlternatives(
@@ -102,14 +137,24 @@ class PayslipEmailService:
             )
             email.attach_alternative(html_body, "text/html")
             
+            # 2. สร้างไฟล์ PDF และแนบไปกับอีเมล
+            try:
+                pdf_content = PayslipPDFService.generate_pdf_bytes(payslip)
+                filename = f"Payslip_{payslip.employee.employee_id}_{payslip.period_month}_{payslip.period_year}_{payslip.cycle}.pdf"
+                email.attach(filename, pdf_content, 'application/pdf')
+            except Exception as pdf_error:
+                print(f"Warning: Could not generate PDF attachment: {str(pdf_error)}")
+                # ยังคงส่งอีเมลต่อไปแม้จะสร้าง PDF ไม่สำเร็จ (หรือจะยกเลิกการส่งก็ได้ตาม Business Logic)
+            
+            # 3. ทำการส่งอีเมล
             if email.send():
-                # บันทึกสถานะการส่งอีเมลเพื่อป้องกันการส่งซ้ำ
+                # บันทึกสถานะการส่งอีเมล
                 payslip.is_email_sent = True
                 payslip.last_sent_at = timezone.now()
                 payslip.save()
                 return True
+                
         except Exception as e:
-            # ควร Log Error ไว้ในระบบเพื่อตรวจสอบภายหลัง
             print(f"Failed to send email for Payslip ID {payslip.id}: {str(e)}")
             
         return False

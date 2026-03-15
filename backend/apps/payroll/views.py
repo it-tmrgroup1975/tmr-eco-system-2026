@@ -9,8 +9,11 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Payslip
 from .serializers import PayslipSerializer
-from .services import PayslipEmailService
+from .services import PayslipEmailService, PayslipPDFService
 from .import_service import PayrollImportService
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AdminPayslipViewSet(viewsets.ModelViewSet):
     queryset = Payslip.objects.all()
@@ -93,3 +96,26 @@ class AdminPayslipViewSet(viewsets.ModelViewSet):
         )
         response['Content-Disposition'] = 'attachment; filename=payroll_import_template.xlsx'
         return response
+    
+    @action(detail=True, methods=['get'], url_path='download-pdf')
+    def download_pdf(self, request, pk=None):
+        """Endpoint สำหรับดาวน์โหลดใบแจ้งเงินเดือนเป็น PDF"""
+        payslip = self.get_object()
+        try:
+            # เรียกใช้ Service เพื่อสร้าง PDF Bytes
+            pdf_bytes = PayslipPDFService.generate_pdf_bytes(payslip)
+            
+            filename = f"Payslip_{payslip.employee.employee_id}_{payslip.period_month}_{payslip.period_year}.pdf"
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+            
+        except Exception as e:
+            # พิมพ์รายละเอียด Error ลงใน Console ของ Django เพื่อการ Debug
+            import traceback
+            print("--- PDF Generation Error Details ---")
+            print(traceback.format_exc()) 
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

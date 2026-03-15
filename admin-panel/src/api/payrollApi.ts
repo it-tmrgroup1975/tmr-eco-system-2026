@@ -46,4 +46,20 @@ export const payrollApi = {
     link.click();
     link.remove();
   },
+
+  downloadPayslipPDF: async (id: number, filename: string): Promise<void> => {
+    // ระบุ responseType เป็น 'blob' เพื่อรับไฟล์ Binary
+    const response = await axiosInstance.get(`/api/admin-payslips/${id}/download-pdf/`, {
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url); // ล้างหน่วยความจำ
+  },
 };
