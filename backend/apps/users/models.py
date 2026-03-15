@@ -36,6 +36,9 @@ class User(AbstractUser):
         ADMIN = 'admin', _('Admin')
         SUPERVISOR = 'supervisor', _('Supervisor')
         STAFF = 'staff', _('Staff')
+        EMPLOYEE = 'employee', _('Employee')
+        HR = 'hr', _('Human Resource')
+        MANAGER = 'manager', _('Manager')
 
     class EmploymentType(models.TextChoices):
         FULL_TIME = 'full_time', _('พนักงานประจำ')
