@@ -1,7 +1,9 @@
 import io
+from rest_framework.views import APIView
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Payslip
 from .serializers import PayslipSerializer  # เพิ่มการ Import Serializer
 from .services import PayslipEmailService
@@ -99,3 +101,33 @@ class AdminPayslipViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename={filename}'
         
         return response
+    
+
+class PayrollImportView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        file_obj = request.FILES.get('file')
+        month = request.data.get('month')
+        year = request.data.get('year')
+        cycle = request.data.get('cycle') # รับค่า '1H' หรือ '2H'
+
+        # Validation เบื้องต้น
+        if not all([file_obj, month, year, cycle]):
+            return Response(
+                {"error": "กรุณาระบุข้อมูลให้ครบถ้วน (ไฟล์, เดือน, ปี, งวดการจ่าย)"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            success_count, errors = PayrollImportService.process_excel(
+                file_obj, int(month), int(year), cycle
+            )
+            
+            return Response({
+                "message": f"นำเข้าข้อมูลสำเร็จ {success_count} รายการ",
+                "errors": errors
+            }, status=status.HTTP_200_OK if not errors else status.HTTP_207_MULTI_STATUS)
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

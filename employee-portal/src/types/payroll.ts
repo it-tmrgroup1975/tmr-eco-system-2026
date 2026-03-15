@@ -1,14 +1,26 @@
+//employee-portal/src/types/payroll.ts
+
+export type PaymentCycle = '1H' | '2H';
+
+export interface PayrollPeriod {
+  id: string;
+  month: number;
+  year: number;
+  cycle: PaymentCycle;
+  cycle_display: string;
+  is_closed: boolean;
+}
+
 export interface Payslip {
   id: number;
-  employee_name: string;
+  employee_id: string;
+  cycle: PaymentCycle; // เพิ่มฟิลด์นี้
   period_month: number;
   period_year: number;
-  hours_rate: number;
-  attendance_hours: number;
-  salary_amount: number;
-  tax_deduction: number;
-  social_security: number;
-  net_salary: number;
+  salary_amount: string; // Decimal จาก Django จะมาเป็น string ใน JSON
+  tax_deduction: string;
+  social_security: string;
+  net_salary: number; // จาก @property ใน Model
   is_email_sent: boolean;
 }
 
@@ -22,7 +34,7 @@ export interface EmailResponse {
   sent_count: number;    // จำนวนอีเมลที่ส่งออกสำเร็จจริง
   failed_count?: number; // (Optional) จำนวนที่ส่งล้มเหลว
   timestamp: string;     // เวลาที่ดำเนินการเสร็จสิ้น
-  
+
   // ในกรณีที่มีข้อผิดพลาดรายบุคคล (ถ้าต้องการเก็บ Log ละเอียด)
   errors?: Array<{
     employee_id: number;

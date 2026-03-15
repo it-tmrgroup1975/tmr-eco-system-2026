@@ -10,6 +10,17 @@ import {
   Sparkles
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import type { PaymentCycle } from "../../types/payroll";
+import { Badge } from "../../components/ui/badge";
+
+const CycleBadge = ({ cycle }: { cycle: PaymentCycle }) => (
+  <Badge className={cn(
+    "backdrop-blur-xl border-none",
+    cycle === '1H' ? "bg-sage-200 text-sage-800" : "bg-blue-100 text-blue-800"
+  )}>
+    {cycle === '1H' ? 'งวดที่ 1' : 'งวดที่ 2'}
+  </Badge>
+);
 
 export const MyPayslipList = () => {
   const navigate = useNavigate();
