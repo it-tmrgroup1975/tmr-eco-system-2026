@@ -59,7 +59,7 @@ export function ImportPayrollDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="border-sage text-sage hover:bg-sage/10">
-          <FileUp className="mr-2 h-4 w-4" /> Import Excel
+          <FileUp className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] backdrop-blur-xl bg-white/90">

@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import { useMyPayroll } from "../../hooks/useMyPayroll";
 import { Card, CardContent } from "../../components/ui/card";
-import { 
-  ChevronRight, 
-  Loader2, 
+import {
+  ChevronRight,
+  Loader2,
   Wallet,
   CalendarDays,
   SearchX,
@@ -13,18 +13,29 @@ import { cn } from "../../lib/utils";
 import type { PaymentCycle } from "../../types/payroll";
 import { Badge } from "../../components/ui/badge";
 
-const CycleBadge = ({ cycle }: { cycle: PaymentCycle }) => (
-  <Badge className={cn(
-    "backdrop-blur-xl border-none",
-    cycle === '1H' ? "bg-sage-200 text-sage-800" : "bg-blue-100 text-blue-800"
-  )}>
-    {cycle === '1H' ? 'งวดที่ 1' : 'งวดที่ 2'}
-  </Badge>
-);
 
 export const MyPayslipList = () => {
   const navigate = useNavigate();
   const { data: payslips, isLoading } = useMyPayroll();
+
+  // ฟังก์ชันช่วยแสดงชื่อเดือนภาษาไทย
+  const getThaiMonth = (month: number) => {
+    return new Date(0, month - 1).toLocaleString('th-TH', { month: 'long' });
+  };
+
+  // คอมโพเนนต์ Badge สำหรับระบุงวดการจ่ายแบบ Glassmorphism
+  const CycleBadge = ({ cycle }: { cycle: PaymentCycle }) => (
+    <Badge className={cn(
+      "backdrop-blur-md border-none px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+      cycle === '1H'
+        ? "bg-sage-100/50 text-sage-800 shadow-sm shadow-sage-200/50"
+        : "bg-blue-100/50 text-blue-800 shadow-sm shadow-blue-200/50"
+    )}>
+      {cycle === '1H' ? 'งวดที่ 1 (ต้นเดือน)' : 'งวดที่ 2 (สิ้นเดือน)'}
+    </Badge>
+  );
+
+  console.log(payslips)
 
   if (isLoading) {
     return (
@@ -64,7 +75,7 @@ export const MyPayslipList = () => {
       <div className="p-5 max-w-md mx-auto space-y-5 pt-6 pb-32 relative z-10">
         {payslips && payslips.length > 0 ? (
           payslips.map((ps, index) => (
-            <Card 
+            <Card
               key={ps.id}
               className={cn(
                 "group border-none rounded-[2.5rem] p-[2px] transition-all duration-500",
@@ -75,45 +86,47 @@ export const MyPayslipList = () => {
               style={{ animationDelay: `${index * 80}ms` }}
               onClick={() => navigate(`/dashboard/payslips/${ps.id}`)}
             >
-              <CardContent className="p-5 bg-white rounded-[2.4rem] flex items-center justify-between relative overflow-hidden">
+              <CardContent className="p-5 bg-white rounded-[2.4rem] flex flex-col gap-4 relative overflow-hidden">
                 {/* Subtle Background Pattern */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-[#4A7C59]/5 rounded-bl-[100px] -mr-10 -mt-10 group-hover:scale-110 transition-transform"></div>
-                
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="relative">
+
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-4">
                     <div className="bg-gradient-to-tr from-[#4A7C59] to-[#6BA37A] p-4 rounded-[1.5rem] shadow-lg shadow-[#4A7C59]/20 transform group-hover:rotate-6 transition-transform">
                       <Wallet className="h-6 w-6 text-white" />
                     </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-black text-slate-700 text-xl tracking-tight">
-                      {ps.period_month}/{ps.period_year}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs font-bold text-slate-400">Net Pay:</span>
-                      <span className="text-base font-black text-[#4A7C59]">
-                        ฿{ps.net_salary.toLocaleString()}
-                      </span>
+                    <div>
+                      <h3 className="font-black text-slate-700 text-xl tracking-tight">
+                        {getThaiMonth(ps.period_month)} {ps.period_year}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs font-bold text-slate-400">Net Pay:</span>
+                        <span className="text-base font-black text-[#4A7C59]">
+                          ฿{ps.net_salary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="bg-slate-50 group-hover:bg-[#4A7C59] p-2 rounded-xl transition-colors">
+                    <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-white" />
+                  </div>
                 </div>
-                
-                <div className="flex flex-col items-end gap-3 relative z-10">
+
+                {/* ส่วนที่เพิ่มใหม่: Status & Cycle Row */}
+                <div className="flex items-center justify-between border-t border-slate-50 pt-4 relative z-10">
+                  <CycleBadge cycle={ps.cycle} />
+
                   <div className={cn(
                     "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5",
-                    ps.is_email_sent 
-                      ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                    ps.is_email_sent
+                      ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                       : "bg-orange-50 text-orange-600 border border-orange-100"
                   )}>
                     <span className={cn(
                       "w-1.5 h-1.5 rounded-full",
                       ps.is_email_sent ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"
                     )}></span>
-                    {ps.is_email_sent ? "Confirmed" : "Process"}
-                  </div>
-                  <div className="bg-slate-50 group-hover:bg-[#4A7C59] p-1.5 rounded-xl transition-colors">
-                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-white" />
+                    {ps.is_email_sent ? "Confirmed" : "Processing"}
                   </div>
                 </div>
               </CardContent>

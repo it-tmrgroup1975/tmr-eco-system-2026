@@ -22,7 +22,9 @@ export interface Payslip {
   tax_deduction: string;
   social_security: string;
   net_salary: number; // จาก @property ใน Model
-  is_email_sent: boolean;
+  is_email_sent: boolean;  
+  department_name: string;
+  employee_department: string;
 }
 
 /**

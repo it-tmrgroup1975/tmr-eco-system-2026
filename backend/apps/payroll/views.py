@@ -1,25 +1,25 @@
 import io
-from rest_framework.views import APIView
+import pandas as pd
+from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
+
 from .models import Payslip
-from .serializers import PayslipSerializer  # เพิ่มการ Import Serializer
+from .serializers import PayslipSerializer
 from .services import PayslipEmailService
 from .import_service import PayrollImportService
-import pandas as pd
-from django.http import HttpResponse
 
 class AdminPayslipViewSet(viewsets.ModelViewSet):
     queryset = Payslip.objects.all()
-    serializer_class = PayslipSerializer  # แก้ไข: เพิ่มบรรทัดนี้เพื่อแก้ AssertionError
+    serializer_class = PayslipSerializer
+    parser_classes = (MultiPartParser, FormParser) # รองรับการรับไฟล์ผ่าน Action ต่างๆ
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        ถ้าเป็น Admin ให้เห็นทั้งหมด 
-        ถ้าเป็นพนักงานทั่วไป ให้เห็นเฉพาะของตัวเอง
-        """
+        """แยกสิทธิ์การเข้าถึงข้อมูลตามบทบาทของผู้ใช้"""
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return Payslip.objects.all()
@@ -27,19 +27,19 @@ class AdminPayslipViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='my-payslips')
     def my_payslips(self, request):
-        """ส่งคืนสลิปเฉพาะของพนักงานที่ล็อกอินอยู่"""
-        queryset = self.get_queryset().filter(employee=request.user).order_by('-period_year', '-period_month')
+        """Endpoint สำหรับพนักงานดึงสลิปของตนเอง"""
+        queryset = self.get_queryset().filter(employee=request.user).order_by('-period_year', '-period_month', '-cycle')
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['post'], url_path='bulk-send')
     def bulk_send(self, request):
+        """ส่งอีเมลแจ้งเงินเดือนแบบกลุ่ม"""
         payslip_ids = request.data.get('ids', [])
         payslips = Payslip.objects.filter(id__in=payslip_ids)
         
         success_count = 0
         for ps in payslips:
-            # ตรวจสอบว่ามีอีเมลพนักงานก่อนส่ง
             if ps.employee.email and PayslipEmailService.send_individual_email(ps):
                 success_count += 1
                 
@@ -48,71 +48,15 @@ class AdminPayslipViewSet(viewsets.ModelViewSet):
             "message": f"ส่งอีเมลสำเร็จ {success_count} จาก {payslips.count()} รายการ",
             "sent_count": success_count
         }, status=status.HTTP_200_OK)
-    
+
     @action(detail=False, methods=['post'], url_path='import-excel')
     def import_excel(self, request):
-        file = request.FILES.get('file')
-        month = request.data.get('month')
-        year = request.data.get('year')
-
-        if not file:
-            return Response({"error": "กรุณาแนบไฟล์"}, status=400)
-
-        success, errors = PayrollImportService.process_excel(file, month, year)
-        
-        return Response({
-            "message": f"นำเข้าสำเร็จ {success} รายการ",
-            "errors": errors
-        }, status=status.HTTP_200_OK if not errors else status.HTTP_207_MULTI_STATUS)
-    
-    @action(detail=False, methods=['get'], url_path='download-template')
-    def download_template(self, request): # เพิ่มพารามิเตอร์ request เข้าไปที่นี่
-        """
-        สร้างและส่งไฟล์ Excel Template สำหรับการนำเข้าข้อมูลเงินเดือน
-        """
-        # 1. กำหนดหัวตาราง (Headers)
-        headers = [
-            'รหัสพนักงาน', 
-            'Hours Rate', 
-            'Attendance', 
-            'Salary Amount', 
-            'Tax', 
-            'SSO'
-        ]
-        
-        # 2. สร้าง DataFrame เปล่าๆ พร้อมตัวอย่างข้อมูล
-        example_data = [
-            ['EMP001', 100.00, 160.0, 16000.00, 500.00, 750.00]
-        ]
-        df = pd.DataFrame(example_data, columns=headers)
-        
-        # 3. เขียนข้อมูลลงใน Memory Buffer
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='PayrollTemplate')
-        
-        # 4. ตั้งค่า Response
-        output.seek(0)
-        filename = "payroll_import_template.xlsx"
-        response = HttpResponse(
-            output.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename={filename}'
-        
-        return response
-    
-
-class PayrollImportView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request, *args, **kwargs):
+        """Endpoint เดียวสำหรับการนำเข้าข้อมูล (แทนที่ PayrollImportView เดิม)"""
         file_obj = request.FILES.get('file')
         month = request.data.get('month')
         year = request.data.get('year')
-        cycle = request.data.get('cycle') # รับค่า '1H' หรือ '2H'
+        cycle = request.data.get('cycle') # รับ '1H' หรือ '2H'
 
-        # Validation เบื้องต้น
         if not all([file_obj, month, year, cycle]):
             return Response(
                 {"error": "กรุณาระบุข้อมูลให้ครบถ้วน (ไฟล์, เดือน, ปี, งวดการจ่าย)"}, 
@@ -120,14 +64,32 @@ class PayrollImportView(APIView):
             )
 
         try:
-            success_count, errors = PayrollImportService.process_excel(
+            success, errors = PayrollImportService.process_excel(
                 file_obj, int(month), int(year), cycle
             )
-            
             return Response({
-                "message": f"นำเข้าข้อมูลสำเร็จ {success_count} รายการ",
+                "message": f"นำเข้าข้อมูลสำเร็จ {success} รายการ",
                 "errors": errors
             }, status=status.HTTP_200_OK if not errors else status.HTTP_207_MULTI_STATUS)
-            
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'], url_path='download-template')
+    def download_template(self, request):
+        """สร้างไฟล์ Excel Template สำหรับ Bi-monthly Payroll"""
+        headers = ['รหัสพนักงาน', 'Hours Rate', 'Attendance', 'Other Income']
+        # ตัวอย่างข้อมูล (ไม่ต้องระบุ Tax/SSO เพราะ Service คำนวณให้)
+        example_data = [['EMP001', 100.00, 160.0, 0.00]]
+        df = pd.DataFrame(example_data, columns=headers)
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='PayrollTemplate')
+        
+        output.seek(0)
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=payroll_import_template.xlsx'
+        return response

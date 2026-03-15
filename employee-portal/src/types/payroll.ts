@@ -13,15 +13,18 @@ export interface PayrollPeriod {
 
 export interface Payslip {
   id: number;
-  employee_id: string;
-  cycle: PaymentCycle; // เพิ่มฟิลด์นี้
+  employee_name: string;
   period_month: number;
   period_year: number;
-  salary_amount: string; // Decimal จาก Django จะมาเป็น string ใน JSON
+  cycle: PaymentCycle; // เพิ่มฟิลด์นี้เพื่อให้ Type System ตรวจสอบได้
+  salary_amount: string;
   tax_deduction: string;
   social_security: string;
-  net_salary: number; // จาก @property ใน Model
+  net_salary: number;
   is_email_sent: boolean;
+  last_sent_at: string | null;
+  attendance_hours: string;
+  hours_rate: string;
 }
 
 /**
