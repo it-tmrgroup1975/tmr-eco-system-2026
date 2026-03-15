@@ -52,12 +52,22 @@ export const PaySlipDetail = () => {
   
   const totalDeductions = deductionItems.reduce((sum, item) => sum + item.value, 0);
 
+  // ลอจิกการกดย้อนกลับอัจฉริยะ
+  const handleBack = () => {
+    // ตรวจสอบว่ามีประวัติการเข้าชมหรือไม่ ถ้าไม่มีให้กลับไปที่ root payroll
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/dashboard/payroll");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F1F5F9] font-['IBM_Plex_Sans_Thai']">
       {/* --- Desktop Elegant Top Bar --- */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-8 h-20 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="rounded-xl border-slate-200 hover:bg-slate-50 gap-2">
+          <Button variant="outline" size="sm" onClick={handleBack} className="rounded-xl border-slate-200 hover:bg-slate-50 gap-2">
             <ArrowLeft className="h-4 w-4" />
             ย้อนกลับ
           </Button>

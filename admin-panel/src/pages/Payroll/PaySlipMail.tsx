@@ -1,6 +1,6 @@
 import { useState, useMemo, useDeferredValue } from "react";
 import { usePayroll } from "../../hooks/usePayroll";
-import { 
+import {
   Calendar, Filter, Search, Check, ChevronsUpDown, Send, FileSpreadsheet
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
@@ -23,12 +23,22 @@ type ViewMode = "LIST" | "KANBAN";
 export const AdminPayroll = () => {
   const { payslips, isLoading, sendEmails, isSending } = usePayroll();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>("LIST");
-  
+
+  // --- ลอจิกใหม่: จดจำ View Mode ผ่าน LocalStorage ---
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const savedMode = localStorage.getItem("payroll_view_mode");
+    return (savedMode as ViewMode) || "LIST";
+  });
+  // ฟังก์ชันสลับมุมมองพร้อมบันทึกค่า
+  const handleSetViewMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("payroll_view_mode", mode);
+  };
+
   const [filterMonth, setFilterMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [viewCycle, setViewCycle] = useState<PaymentCycle | "ALL">("ALL");
   const [emailStatus, setEmailStatus] = useState<EmailFilterStatus>("ALL");
-  
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
@@ -44,6 +54,8 @@ export const AdminPayroll = () => {
     payslips.forEach(ps => { if (ps.employee_department) depts.add(ps.employee_department); });
     return Array.from(depts).sort();
   }, [payslips]);
+
+
 
   const filteredPayslips = useMemo(() => {
     if (!payslips) return [];
@@ -67,7 +79,7 @@ export const AdminPayroll = () => {
     if (!payslips) return [];
     const names = new Set<string>();
     payslips.forEach(ps => names.add(ps.employee_name));
-    return Array.from(names).filter(name => 
+    return Array.from(names).filter(name =>
       name.toLowerCase().includes(deferredSearch.toLowerCase())
     ).slice(0, 50);
   }, [payslips, deferredSearch]);
@@ -84,18 +96,18 @@ export const AdminPayroll = () => {
 
   if (isLoading) return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      <HeaderSection count={0} selectedCount={0} viewMode={viewMode} setViewMode={setViewMode} onBulkSend={() => {}} isSending={false} />
+      <HeaderSection count={0} selectedCount={0} viewMode={viewMode} setViewMode={setViewMode} onBulkSend={() => { }} isSending={false} />
       <PayslipSkeleton />
     </div>
   );
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen font-['IBM_Plex_Sans_Thai']">
-      <HeaderSection 
-        count={filteredPayslips.length} 
-        selectedCount={selectedIds.length} 
-        viewMode={viewMode} 
-        setViewMode={setViewMode} 
+      <HeaderSection
+        count={filteredPayslips.length}
+        selectedCount={selectedIds.length}
+        viewMode={viewMode}
+        setViewMode={handleSetViewMode}
         onBulkSend={handleBulkSend}
         isSending={isSending}
       />
@@ -179,10 +191,10 @@ export const AdminPayroll = () => {
       {/* Main Content */}
       {paginatedPayslips.length > 0 ? (
         viewMode === 'LIST' ? (
-          <ListView 
-            data={paginatedPayslips} 
-            selectedIds={selectedIds} 
-            onToggle={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])} 
+          <ListView
+            data={paginatedPayslips}
+            selectedIds={selectedIds}
+            onToggle={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])}
           />
         ) : (
           <KanbanView data={paginatedPayslips} onSend={handleSingleSend} isSending={isSending} />
@@ -194,12 +206,12 @@ export const AdminPayroll = () => {
         </div>
       )}
 
-      <PaginationControl 
-        currentPage={currentPage} 
-        totalPages={totalPages} 
-        setCurrentPage={setCurrentPage} 
-        totalItems={filteredPayslips.length} 
-        itemsPerPage={itemsPerPage} 
+      <PaginationControl
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+        totalItems={filteredPayslips.length}
+        itemsPerPage={itemsPerPage}
       />
     </div>
   );
