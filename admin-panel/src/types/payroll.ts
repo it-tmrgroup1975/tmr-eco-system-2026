@@ -13,6 +13,7 @@ export interface PayrollPeriod {
 
 export interface Payslip {
   id: number;
+  employee: number;
   employee_id: string;
   employee_name: string;
   cycle: PaymentCycle; // เพิ่มฟิลด์นี้
@@ -25,6 +26,8 @@ export interface Payslip {
   is_email_sent: boolean;  
   department_name: string;
   employee_department: string;
+  attendance_hours: string;
+  hours_rate: string;
 }
 
 /**

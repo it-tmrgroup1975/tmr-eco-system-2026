@@ -5,7 +5,8 @@ import LoginPage from "./pages/Auth/LoginPage";
 import AppLayout from "./components/shared/AppLayout";
 import DashboardPage from "./pages/Dashboard/Index";
 import EmployeeListPage from "./pages/Employees/EmployeeListPage";
-import { AdminPayroll } from "./pages/Payroll/AdminPayroll";
+import PaySlipMail from "./pages/Payroll/PaySlipMail";
+import { PaySlipDetail } from "./pages/Payroll/PaySlipDetail";
 
 function App() {
   return (
@@ -24,7 +25,8 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="employees" element={<EmployeeListPage />} />
-            <Route path="payroll" element={<AdminPayroll />} />
+            <Route path="payroll" element={<PaySlipMail />} />
+            <Route path="/payroll/detail/:id" element={<PaySlipDetail />} />
           </Route>
         </Route>
 

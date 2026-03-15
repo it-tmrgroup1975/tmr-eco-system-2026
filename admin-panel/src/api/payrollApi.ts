@@ -8,6 +8,11 @@ export const payrollApi = {
     return response.data;
   },
 
+  getPayslipDetail: async (id: number): Promise<Payslip> => {
+    const response = await axiosInstance.get(`/api/admin-payslips/${id}/`);
+    return response.data;
+  },
+
   // ส่งอีเมลแบบกลุ่ม
   sendBulkEmails: async (data: BulkSendRequest): Promise<EmailResponse> => {
     const response = await axiosInstance.post("/api/admin-payslips/bulk-send/", data);
